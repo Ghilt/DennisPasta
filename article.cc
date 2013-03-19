@@ -18,7 +18,7 @@ namespace client_server {
         return text;
     }
 
-    int Article::getID() const {
+    unsigned int Article::getID() const {
         return id;
     }
 

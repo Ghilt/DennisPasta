@@ -14,7 +14,7 @@ namespace client_server {
         
     public:
         /* Create an article */
-        Newsgroup(const string& n, int i) : name(n), id(i){
+        Newsgroup(const string& n, unsigned int i) : name(n), id(i){
             currentArticleID = 1;
         }
 
@@ -23,14 +23,15 @@ namespace client_server {
         void createArticle(const string& title, const string& author, const string& text);
 
         const string& getName() const;
-        int getID() const; 
+        
+        unsigned int getID() const; 
 
     private:
         /* unique name */
         string name;
         /* The unique identification */
-        int id;
-        int currentArticleID;
+        unsigned int id;
+        unsigned int currentArticleID;
         
         
         vector<Article*> articles;

@@ -12,13 +12,13 @@ namespace client_server {
         
     public:
         /* Create an article */
-        Article(const string& tit, const string& auth, const string& tex, int i) : title(tit), author(auth), text(tex), id(i){}
+        Article(const string& tit, const string& auth, const string& tex, unsigned int i) : title(tit), author(auth), text(tex), id(i){}
 
         const string& getTitle() const;
         const string& getAuthor() const;
         const string& getText() const;
         
-        int getID() const;
+        unsigned int getID() const;
         
     private:
         
@@ -29,7 +29,7 @@ namespace client_server {
         string text;
 
         /* The unique identification */
-        int id;
+        unsigned int id;
         
     };
 }

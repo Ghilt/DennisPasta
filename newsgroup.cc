@@ -18,7 +18,7 @@ namespace client_server {
     	return name;
     }      
 
-    int Newsgroup::getID() const{
+    unsigned int Newsgroup::getID() const{
     	return id;
     }
 
