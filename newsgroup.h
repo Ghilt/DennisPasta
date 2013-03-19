@@ -26,6 +26,10 @@ namespace client_server {
         
         unsigned int getID() const; 
 
+        const Article* operator[](unsigned int i) const;
+
+        Article* operator[](unsigned int i);
+
     private:
         /* unique name */
         string name;
