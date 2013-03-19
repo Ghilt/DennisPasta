@@ -26,7 +26,7 @@ libclientserver.a: connection.o server.o article.o newsgroup.o
 	ranlib libclientserver.a
 
 client: client.o
-newsserver: newsserver.o connection.o server.o
+newsserver: newsserver.o connection.o server.o newsgroup.o
 
 
 clean:
