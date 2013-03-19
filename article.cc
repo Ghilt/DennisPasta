@@ -6,15 +6,15 @@ using namespace std;
 namespace client_server {
 
 
-    string Article::getTitle() const{
+    const string& Article::getTitle() const{
         return title;
     }
 
-    string Article::getAuthor() const{
+    const string& Article::getAuthor() const{
         return author;
     }
 
-    string Article::getText() const{
+    const string& Article::getText() const{
         return text;
     }
 

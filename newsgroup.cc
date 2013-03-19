@@ -13,8 +13,13 @@ namespace client_server {
     void Newsgroup::createArticle(const string& title, const string& author, const string& text){
     	articles.push_back(new Article(title, author, text, currentArticleID++));
     }
-        
 
-        
+    const string& Newsgroup::getName() const{
+    	return name;
+    }      
+
+    int Newsgroup::getID() const{
+    	return id;
+    }
 
 }

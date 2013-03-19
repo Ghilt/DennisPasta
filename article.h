@@ -14,9 +14,9 @@ namespace client_server {
         /* Create an article */
         Article(const string& tit, const string& auth, const string& tex, int i) : title(tit), author(auth), text(tex), id(i){}
 
-        string getTitle() const;
-        string getAuthor() const;
-        string getText() const;
+        const string& getTitle() const;
+        const string& getAuthor() const;
+        const string& getText() const;
         
         int getID() const;
         

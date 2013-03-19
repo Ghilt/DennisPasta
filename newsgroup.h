@@ -22,6 +22,8 @@ namespace client_server {
         
         void createArticle(const string& title, const string& author, const string& text);
 
+        const string& getName() const;
+        int getID() const; 
 
     private:
         /* unique name */
