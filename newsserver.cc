@@ -8,6 +8,7 @@
 #include <limits>
 #include "newsgroup.h"
 #include <cassert>
+#include <algorithm>
 #include "protocol.h"
 
 using namespace std;
@@ -19,13 +20,13 @@ using client_server::Newsgroup;
 
 #define UNUSED_PARAM(p) (void)p
 
-int readCommand(Connection* conn)
+unsigned int readCommand(Connection* conn)
 	throw(ConnectionClosedException) {
 
 	unsigned char cmd = conn->read();
 	return cmd;
 }
-int readIntParameter(Connection* conn) 
+unsigned int readIntParameter(Connection* conn) 
 	throw(ConnectionClosedException){
 	
 	unsigned char pn = conn->read();
@@ -71,14 +72,12 @@ void listNewsGroups(const vector<Newsgroup*>& groups, Connection* conn)
 	for (auto it = groups.begin(); it != groups.end(); ++it) {
 		Newsgroup* grp = *it;
 
-		UNUSED_PARAM(grp);
-
 		ret += Protocol::PAR_NUM;
-		ret += 1; 		// TODO grp.id
+		ret += grp->getID(); 
 
 		ret += Protocol::PAR_STRING;
-		ret += 3; 		// TODO grp.name.size()
-		ret += "c++"; 	// TODO grp.name
+		ret += grp->getName().size(); 		
+		ret += grp->getName(); 
 	}
 	ret += Protocol::ANS_END;
 
@@ -93,19 +92,16 @@ void createNewsGroup(vector<Newsgroup*>& groups, Connection* conn)
 
 	string name = readStringParameter(conn);
 
-	for (auto it = groups.begin(); it != groups.end(); ++it) {
-		Newsgroup* grp = *it;
+	auto it = find_if(groups.begin(), groups.end(), [name](Newsgroup* grp) {
+		return grp->getName() == name;
+	});
 
-		UNUSED_PARAM(grp);
-
-		if (name == "c++") { // TODO grp.name
-			ret += Protocol::ANS_NAK;
-			ret += Protocol::ERR_NG_ALREADY_EXISTS;
-			ret += Protocol::ANS_END;
-			writeString(ret, conn);
-
-			return;
-		}
+	if (it != groups.end()) {
+		ret += Protocol::ANS_NAK;
+		ret += Protocol::ERR_NG_ALREADY_EXISTS;
+		ret += Protocol::ANS_END;
+		writeString(ret, conn);
+		return;
 	}
 
 	unsigned int id = 1;
@@ -118,9 +114,8 @@ void createNewsGroup(vector<Newsgroup*>& groups, Connection* conn)
 		for (auto it = groups.begin(); it != groups.end(); ++it) {
 			Newsgroup* grp = *it;
 
-			UNUSED_PARAM(grp);
 
-			if (id == 1337) {//TODO grp.id
+			if (id == grp->getID()) {
 				found = true;
 				break;
 			}
@@ -137,7 +132,30 @@ void createNewsGroup(vector<Newsgroup*>& groups, Connection* conn)
 
 	writeString(ret, conn);
 }
+void deleteNewsGroup(vector<Newsgroup*>& groups, Connection* conn) 
+	throw(ConnectionClosedException){
 
+	string ret;
+
+	ret += Protocol::ANS_DELETE_NG;
+
+	unsigned int id = readIntParameter(conn);
+
+	auto it = find_if(groups.begin(), groups.end(), [id](Newsgroup* grp) {
+		return grp->getID() == id;
+	});
+
+	if (it == groups.end()) {
+		ret += Protocol::ANS_NAK;
+		ret += Protocol::ERR_NG_DOES_NOT_EXIST;
+	} else {
+		groups.erase(it);
+		ret += Protocol::ANS_ACK;
+		
+	}
+	ret += Protocol::ANS_END;
+	writeString(ret, conn);
+}
 
 int main(int argc, char* argv[]){
 
@@ -166,6 +184,7 @@ int main(int argc, char* argv[]){
 						createNewsGroup(groups, conn);
 						break;
 					case Protocol::COM_DELETE_NG:
+						deleteNewsGroup(groups, conn);
 						break;
 					case Protocol::COM_LIST_ART:
 						break;
