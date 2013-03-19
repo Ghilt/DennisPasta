@@ -5,7 +5,7 @@
 
 CXX		 = g++
 CC		 = g++
-CXXFLAGS	 = -ggdb -Wall -W -Werror -pedantic-errors
+CXXFLAGS	 = -ggdb -Wall -W -Werror -pedantic-errors -std=c++0x
 CXXFLAGS	+= -Wmissing-braces -Wparentheses
 # The following option cannot be used since some of the socket
 # macros give warnings on "old-style-cast"
@@ -15,7 +15,7 @@ SRC	= $(wildcard *.cc)
 
 .PHONY: all clean cleaner
 
-all: libclientserver.a client
+all: libclientserver.a client newsserver
 
 # Create the library; ranlib is for Darwin and maybe other systems.
 # Doesn't seem to do any damage on other systems.
@@ -26,6 +26,7 @@ libclientserver.a: connection.o server.o article.o newsgroup.o
 	ranlib libclientserver.a
 
 client: client.o
+newsserver: newsserver.o connection.o server.o
 
 
 clean:
