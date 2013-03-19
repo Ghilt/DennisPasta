@@ -20,12 +20,13 @@ all: libclientserver.a client
 # Create the library; ranlib is for Darwin and maybe other systems.
 # Doesn't seem to do any damage on other systems.
 
-libclientserver.a: connection.o server.o
+libclientserver.a: connection.o server.o article.o newsgroup.o
 	ar rv libclientserver.a \
-	connection.o server.o
+	connection.o server.o article.o newsgroup.o
 	ranlib libclientserver.a
 
 client: client.o
+
 
 clean:
 	$(RM) *.o
