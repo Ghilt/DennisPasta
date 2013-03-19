@@ -1,5 +1,5 @@
 #
-# Makefile to make the file libclientserver.a, containing
+# Makefile to make the file libclientserver.a,containing
 # connection.o and server.o
 #
 
