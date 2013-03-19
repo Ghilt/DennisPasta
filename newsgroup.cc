@@ -1,8 +1,18 @@
+#include "newsgroup.h"
+#include <string>
+#include "article.h"
+
+using namespace std;
+
 namespace client_server {
 
 
         
-    Newsgroup::~Newsgroup();
+    Newsgroup::~Newsgroup(){}
+
+    void Newsgroup::createArticle(const string& title, const string& author, const string& text){
+    	articles.push_back(new Article(title, author, text, currentArticleID++));
+    }
         
 
         
