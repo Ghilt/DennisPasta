@@ -1,6 +1,5 @@
 #include "newsgroup.h"
 #include <string>
-#include "article.h"
 
 using namespace std;
 
@@ -29,7 +28,8 @@ namespace client_server {
     const Article* Newsgroup::operator[](unsigned int i) const{
 
     	for(auto it = articles.begin(); it != articles.end(); ++it){
-    		if((*it)->getID() == i)
+    		unsigned int art_id = (*it)->getID();
+    		if(art_id == i)
     			return (*it);
     	}
 
@@ -39,7 +39,8 @@ namespace client_server {
     Article* Newsgroup::operator[](unsigned int i){
 
     	for(auto it = articles.begin(); it != articles.end(); ++it){
-    		if((*it)->getID() == i)
+    		unsigned int art_id = (*it)->getID();
+    		if(art_id == i)
     			return (*it);
     	}
 
