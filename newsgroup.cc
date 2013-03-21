@@ -19,6 +19,9 @@ namespace client_server {
     void Newsgroup::createArticle(const string& text, const string& author, const string& title){
         articles.push_back(new Article(title, author, text, currentArticleID++));
     }
+    void Newsgroup::insertArticle(Article* art) {
+        articles.push_back(art);
+    }
 
     void Newsgroup::deleteArticle(const unsigned int id){
         auto it = find_if(articles.begin(), articles.end(), [id](Article* a)->bool {

@@ -14,13 +14,13 @@ namespace client_server {
         
     public:
         /* Create an article */
-        Newsgroup(const string& n, unsigned int i) : name(n), id(i){
-            currentArticleID = 1;
+        Newsgroup(const string& n, unsigned int i, unsigned int currID = 1) : name(n), id(i), currentArticleID(currID) {
         }
 
         ~Newsgroup();
         
         void createArticle(const string& title, const string& author, const string& text);
+        void insertArticle(Article* art);
 
         void deleteArticle(const unsigned int id);
 

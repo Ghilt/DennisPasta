@@ -2,11 +2,11 @@
 # Makefile to make the file libclientserver.a,containing
 # connection.o and server.o
 #
-
 CXX		 = g++
 CC		 = g++
 CXXFLAGS	 = -ggdb -Wall -W -Werror -pedantic-errors -std=c++0x
 CXXFLAGS	+= -Wmissing-braces -Wparentheses
+CXXFLAGS += -DDISK_SERVER
 # The following option cannot be used since some of the socket
 # macros give warnings on "old-style-cast"
 #CXXFLAGS	+= -Wold-style-cast
