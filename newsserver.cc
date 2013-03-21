@@ -245,7 +245,7 @@ void deleteArticle(vector<Newsgroup*>& groups, Connection* conn){
 	unsigned int idgroup = readIntParameter(conn);
 	unsigned int idArt = readIntParameter(conn);
 	string ret;
-	ret += Protocol::ANS_CREATE_ART;
+	ret += Protocol::ANS_DELETE_ART;
 	auto it = find_if(groups.begin(), groups.end(), [idgroup](Newsgroup* grp) {
 		return grp->getID() == idgroup;
 	});
