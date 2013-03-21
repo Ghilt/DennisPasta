@@ -10,6 +10,9 @@
 #include <cassert>
 #include <algorithm>
 #include "protocol.h"
+#include "dirent.h"
+#include <cstring>
+#include <fstream>
 
 using namespace std;
 using protocol::Protocol;
@@ -20,6 +23,8 @@ using client_server::Newsgroup;
 using client_server::Article;
 
 #define UNUSED_PARAM(p) (void)p
+
+unsigned int currNewsGroupID = 0;
 
 unsigned char readCommand(Connection* conn)
 	throw(ConnectionClosedException) {
@@ -161,28 +166,8 @@ void createNewsGroup(vector<Newsgroup*>& groups, Connection* conn)
 		writeString(ret, conn);
 		return;
 	}
-
-	unsigned int id = 1;
-
-	while (true) {
-		
-		++id;
-		bool found = false;
-
-		for (auto it = groups.begin(); it != groups.end(); ++it) {
-			Newsgroup* grp = *it;
-
-
-			if (id == grp->getID()) {
-				found = true;
-				break;
-			}
-		}
-		if (!found)
-			break;
-	}
 	
-	Newsgroup* newGroup = new Newsgroup(name, id);
+	Newsgroup* newGroup = new Newsgroup(name, ++currNewsGroupID);
 	groups.push_back(newGroup);
 
 	ret += Protocol::ANS_ACK;
@@ -306,7 +291,7 @@ void getArticle(vector<Newsgroup*>& groups, Connection* conn){
 int main(int argc, char* argv[]){
 
 	if (argc != 2) {
-		cerr << "Usage: myserver port-number" << endl;
+		cerr << "Usage: newsserver port-number" << endl;
 		exit(1);
 	}
 	Server server(atoi(argv[1]));
@@ -317,12 +302,101 @@ int main(int argc, char* argv[]){
 	}
 	vector<Newsgroup*> groups;
 
+	currNewsGroupID = 0;
+#ifdef DISK_SERVER
+	//load
+
+	cout << "!loading!" << endl;
+ 
+	DIR *dir = opendir("./db/");
+	if (dir) {
+		cout << "found dir!" << endl;
+		dirent* dp = readdir(dir);
+
+		while (dp != NULL) {
+			if (strcmp(dp->d_name, "info") == 0) {
+
+				cout << "found info file #1" << endl;
+
+				ifstream in("./db/info");
+				in >> currNewsGroupID;
+				in.close();
+
+			} else if (strcmp(dp->d_name, ".") != 0 && strcmp(dp->d_name, "..") != 0) { //mapp
+
+				cout << "found news group" << endl;
+
+				int id = atoi(dp->d_name);
+				string groupDir("./db/");
+				groupDir += dp->d_name;
+
+				DIR *group = opendir(groupDir.c_str());
+
+				groupDir += "/info";
+				ifstream nameStream(groupDir);
+				string name;
+				string idPos;
+				getline(nameStream, name);
+				getline(nameStream, idPos);
+				nameStream.close();
+
+				Newsgroup* ng = new Newsgroup(name, id, atoi(idPos.c_str()));
+
+				dirent* article = readdir(group);
+
+				while (article != NULL) {
+					if (strcmp(article->d_name, "info") != 0 &&
+						strcmp(article->d_name, ".") != 0 &&
+						strcmp(article->d_name, "..") != 0) {
+						string file = "./db/";
+						file += dp->d_name;
+						file += "/";
+						file += article->d_name;
+
+						ifstream articleFile(file);
+
+						string title;
+						string author;
+						string text;
+						getline(articleFile, title);
+						getline(articleFile, author);
+
+						string textBuffer;
+						while (getline(articleFile, textBuffer)) {
+							text += textBuffer;
+							text += "\n";
+						}
+
+						cout << "found article " << article->d_name << endl;
+						cout << "opening file " << file << endl;
+						cout << "ti: " << title << endl;
+						cout << "a: " << author << endl;
+						cout << "te: " << text << endl;
+
+
+						Article* art = new Article(title, author, text, atoi(article->d_name));
+						ng->insertArticle(art);
+					}
+					article = readdir(group);
+				}
+
+				groups.push_back(ng);
+			}
+
+			dp = readdir(dir);
+		}
+		closedir(dir);
+	} else {
+		cout << "!found dir" << endl;
+	}
+#endif
+
 	while (true) {
 		Connection* conn = server.waitForActivity();
 		if (conn != 0) {
 			try {
 				unsigned int nbr = readCommand(conn);
-				cout << "received cmd " << nbr << endl;
+				bool shouldSave = false;
 				switch (nbr) {
 					case Protocol::COM_LIST_NG:
 					{
@@ -332,11 +406,13 @@ int main(int argc, char* argv[]){
 					case Protocol::COM_CREATE_NG:
 					{
 						createNewsGroup(groups, conn);
+						shouldSave = true;
 					}
 						break;
 					case Protocol::COM_DELETE_NG:
 					{
 						deleteNewsGroup(groups, conn);
+						shouldSave = true;
 					}
 						break;
 					case Protocol::COM_LIST_ART:
@@ -347,11 +423,13 @@ int main(int argc, char* argv[]){
 					case Protocol::COM_CREATE_ART:
 					{
 						createArticle(groups,conn);
+						shouldSave = true;
 					}
 						break;
 					case Protocol::COM_DELETE_ART:
 					{
 						deleteArticle(groups,conn);
+						shouldSave = true;
 					}
 						break;
 					case Protocol::COM_GET_ART:
@@ -369,6 +447,15 @@ int main(int argc, char* argv[]){
 				unsigned int end = readCommand(conn);
 
 				assert(end == Protocol::COM_END);
+
+#ifdef DISK_SERVER
+				//save
+				if (shouldSave) {
+					cout << "should save!" << endl;	
+				}
+#else
+				UNUSED_PARAM(shouldSave);
+#endif
 
 			} catch (ConnectionClosedException&) {
 				server.deregisterConnection(conn);
