@@ -107,7 +107,34 @@ throw(ConnectionClosedException){
     return ret;
 }
 
-string createNewsGroup(Connection* conn)
+string deleteNewsgroup(Connection* conn){
+    conn->read();
+    return "";
+
+}
+string listArticles(Connection* conn){
+    conn->read();
+    return "";
+    
+}
+string createArticle(Connection* conn){
+    conn->read();
+    return "";
+    
+}
+string deleteArticle(Connection* conn){
+
+    conn->read();
+    return "";    
+}
+string getArticle(Connection* conn){
+
+    conn->read();
+    return "";
+}
+
+
+string createNewsgroup(Connection* conn)
 throw(ConnectionClosedException){
     string com;
     com += Protocol::COM_CREATE_NG;
@@ -180,37 +207,37 @@ int main(int argc, char* argv[]) {
                 break;
                 case Protocol::COM_CREATE_NG:
                 {
-                    ans = createNewsGroup(conn);
+                    ans = createNewsgroup(conn);
                 }
                 break;
                 case Protocol::COM_DELETE_NG:
                 {
-                   
+                   ans = deleteNewsgroup(conn);
                 }
                 break;
                 case Protocol::COM_LIST_ART:
                 {
-                   
+                   ans = listArticles(conn);
                 }
                 break;
                 case Protocol::COM_CREATE_ART:
                 {
-                    
+                    ans = createArticle(conn);
                 }
                 break;
                 case Protocol::COM_DELETE_ART:
                 {
-                    
+                    ans = deleteArticle(conn);
                 }
                 break;
                 case Protocol::COM_GET_ART:
                 {
-                    
+                    ans = getArticle(conn);
                 }
                 break;
                 default:
                 {
-                    cerr << "NewsServer recieved unrecognized code " << nbr << ", exiting. " << endl;
+                    cerr << "Software do not recognise command" << nbr << ", exiting. //Adam" << endl;
                     exit(1);
                 }
                 break;
