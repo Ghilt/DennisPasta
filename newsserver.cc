@@ -125,7 +125,7 @@ void listArticles(const vector<Newsgroup*>& groups, Connection* conn) {
 		ret += Protocol::PAR_NUM;		
 		writeNumber(n->size(),ret);
 		for(int i = 0; i!=n->size(); ++i){
-			Article* a = n->getArticle(i);
+			Article* a = (*n)[i];
 			
 			ret += Protocol::PAR_NUM;
 			writeNumber(a->getID(),ret);
@@ -255,7 +255,7 @@ void deleteArticle(vector<Newsgroup*>& groups, Connection* conn){
 		ret += Protocol::ERR_NG_DOES_NOT_EXIST;
 	}else{		
 		Newsgroup *n = *it;
-		Article* a = (*n)[idArt];
+		Article* a = n->getArticle(idArt);
 		if( a ==0){
 			ret+=Protocol::ANS_NAK;
 			ret += Protocol::ERR_ART_DOES_NOT_EXIST;
@@ -285,7 +285,7 @@ void getArticle(vector<Newsgroup*>& groups, Connection* conn){
 		ret += Protocol::ERR_NG_DOES_NOT_EXIST;
 	}else{		
 		Newsgroup *n = *it;
-		Article* a = (*n)[idArt];
+		Article* a = n->getArticle(idArt);
 		if( a ==0){
 			ret+=Protocol::ANS_NAK;
 			ret += Protocol::ERR_ART_DOES_NOT_EXIST;
@@ -359,11 +359,6 @@ int main(int argc, char* argv[]){
 						getArticle(groups,conn);
 					}
 						break;
-					case Protocol::COM_END:
-					{
-
-					}
-						break;
 					default:
 					{
 						cerr << "NewsServer recieved unrecognized code " << nbr << ", exiting. " << endl;
@@ -372,8 +367,6 @@ int main(int argc, char* argv[]){
 						break;
 				}
 				unsigned int end = readCommand(conn);
-
-				cout << "end cmd = " << end << endl;
 
 				assert(end == Protocol::COM_END);
 
