@@ -15,7 +15,7 @@ SRC	= $(wildcard *.cc)
 
 .PHONY: all clean cleaner
 
-all: libclientserver.a client newsserver
+all: libclientserver.a client newsserver newsclient
 
 # Create the library; ranlib is for Darwin and maybe other systems.
 # Doesn't seem to do any damage on other systems.
@@ -28,6 +28,7 @@ libclientserver.a: connection.o server.o article.o newsgroup.o
 client: client.o
 newsserver: newsserver.o connection.o server.o newsgroup.o article.o
 
+newsclient: newsclient.o connection.o
 
 clean:
 	$(RM) *.o
