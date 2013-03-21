@@ -77,7 +77,7 @@ void writeString(const string& s, Connection* conn)
 	for (size_t i = 0; i < s.size(); ++i) {
 		conn->write(s[i]);
 	}
-	conn->write('$'); // `$' is end of string
+//	conn->write('$'); // `$' is end of string
 }
 
 void listNewsGroups(const vector<Newsgroup*>& groups, Connection* conn) 
