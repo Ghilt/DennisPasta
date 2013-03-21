@@ -166,9 +166,13 @@ int main(int argc, char* argv[]) {
             } else if(nbr == 2){
                 com += Protocol::COM_CREATE_NG;
                 com += Protocol::PAR_STRING;
-                string ng_name;
-                cin >> ng_name;
-                string num;
+                string ng_name, num;
+
+                getline(cin, ng_name);
+
+                ng_name = ng_name.substr(1,ng_name.size()-1);
+
+
                 writeNumber(ng_name.size(), num);
                 com += num;
                 com += ng_name;
