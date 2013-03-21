@@ -22,6 +22,8 @@ namespace client_server {
         
         void createArticle(const string& title, const string& author, const string& text);
 
+        void deleteArticle(const unsigned int id);
+
         const string& getName() const;
         
         unsigned int getID() const; 
@@ -29,6 +31,10 @@ namespace client_server {
         const Article* operator[](unsigned int i) const;
 
         Article* operator[](unsigned int i);
+
+        int size() const;
+
+        Article* getArticle(int index) const;
 
     private:
         /* unique name */

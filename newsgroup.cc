@@ -1,5 +1,8 @@
 #include "newsgroup.h"
 #include <string>
+#include <algorithm>
+#include <iostream>
+
 
 using namespace std;
 
@@ -13,9 +16,19 @@ namespace client_server {
     	}
     }
 
-    void Newsgroup::createArticle(const string& title, const string& author, const string& text){
-    	articles.push_back(new Article(title, author, text, currentArticleID++));
+    void Newsgroup::createArticle(const string& text, const string& author, const string& title){
+        articles.push_back(new Article(title, author, text, currentArticleID++));
     }
+
+    void Newsgroup::deleteArticle(const unsigned int id){
+        auto it = find_if(articles.begin(), articles.end(), [id](Article* a)->bool {
+            return (a->getID() == id);
+        });
+        if(it!=articles.end()){
+            articles.erase(it);
+        }
+    }
+
 
     const string& Newsgroup::getName() const{
     	return name;
@@ -47,5 +60,11 @@ namespace client_server {
     	return 0;
     }
 
+    int Newsgroup::size() const{
+        return articles.size();
+    }
 
+    Article* Newsgroup::getArticle(int index) const{
+        return articles[index];
+    }
 }

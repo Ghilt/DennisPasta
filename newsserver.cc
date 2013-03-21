@@ -17,6 +17,7 @@ using client_server::Server;
 using client_server::Connection;
 using client_server::ConnectionClosedException;
 using client_server::Newsgroup;
+using client_server::Article;
 
 #define UNUSED_PARAM(p) (void)p
 
@@ -80,11 +81,15 @@ void writeString(const string& s, Connection* conn)
 //	conn->write('$'); // `$' is end of string
 }
 
+void writeStringParameter(string param, string& ret) {
+	ret += Protocol::PAR_STRING;
+	writeNumber(param.size(), ret);
+	ret += param;
+}
+
 void listNewsGroups(const vector<Newsgroup*>& groups, Connection* conn) 
 	throw(ConnectionClosedException) {
 	string ret;
-
-	cout << "listing all " << groups.size() << " groups!" << endl;
 
 	ret += Protocol::ANS_LIST_NG;
 
@@ -97,16 +102,43 @@ void listNewsGroups(const vector<Newsgroup*>& groups, Connection* conn)
 		ret += Protocol::PAR_NUM;
 		writeNumber(grp->getID(), ret);
 
-		ret += Protocol::PAR_STRING;
-		writeNumber(grp->getName().size(), ret);
-		ret += grp->getName(); 
+		writeStringParameter(grp->getName(), ret);
 	}
 	ret += Protocol::ANS_END;
 
-	cout << "answering: " << ret << endl;
-
 	writeString(ret, conn);
 }
+void listArticles(const vector<Newsgroup*>& groups, Connection* conn) {
+	unsigned int id = readIntParameter(conn);
+	string ret;
+	ret += Protocol::ANS_LIST_ART;
+	auto it = find_if(groups.begin(), groups.end(), [id](Newsgroup* grp) {
+		return grp->getID() == id;
+	});
+
+	if(it== groups.end()){
+		ret += Protocol::ANS_NAK;
+		ret += Protocol::ERR_NG_DOES_NOT_EXIST;
+	}else{
+		ret += Protocol::ANS_ACK;
+		Newsgroup *n = *it;
+		ret += Protocol::PAR_NUM;		
+		writeNumber(n->size(),ret);
+		for(int i = 0; i!=n->size(); ++i){
+			Article* a = n->getArticle(i);
+			
+			ret += Protocol::PAR_NUM;
+			writeNumber(a->getID(),ret);
+
+			writeStringParameter(a->getTitle(), ret);
+		}
+	}
+
+	ret += Protocol::ANS_END;
+
+	writeString(ret,conn);
+}
+
 void createNewsGroup(vector<Newsgroup*>& groups, Connection* conn) 
 	throw(ConnectionClosedException){
 
@@ -183,6 +215,94 @@ void deleteNewsGroup(vector<Newsgroup*>& groups, Connection* conn)
 	writeString(ret, conn);
 }
 
+void createArticle(vector<Newsgroup*>& groups, Connection* conn){
+	unsigned int id = readIntParameter(conn);
+	string ret;
+	ret += Protocol::ANS_CREATE_ART;
+	auto it = find_if(groups.begin(), groups.end(), [id](Newsgroup* grp) {
+		return grp->getID() == id;
+	});
+
+	if(it== groups.end()){
+		ret += Protocol::ANS_NAK;
+		ret += Protocol::ERR_NG_DOES_NOT_EXIST;
+	}else{
+		ret += Protocol::ANS_ACK;
+		Newsgroup *n = *it;
+		n->createArticle(
+			readStringParameter(conn),
+			readStringParameter(conn), 
+			readStringParameter(conn));	
+	}
+
+	ret += Protocol::ANS_END;
+
+	writeString(ret,conn);
+}
+
+
+void deleteArticle(vector<Newsgroup*>& groups, Connection* conn){
+	unsigned int idgroup = readIntParameter(conn);
+	unsigned int idArt = readIntParameter(conn);
+	string ret;
+	ret += Protocol::ANS_CREATE_ART;
+	auto it = find_if(groups.begin(), groups.end(), [idgroup](Newsgroup* grp) {
+		return grp->getID() == idgroup;
+	});
+
+	if(it== groups.end()){
+		ret += Protocol::ANS_NAK;
+		ret += Protocol::ERR_NG_DOES_NOT_EXIST;
+	}else{		
+		Newsgroup *n = *it;
+		Article* a = (*n)[idArt];
+		if( a ==0){
+			ret+=Protocol::ANS_NAK;
+			ret += Protocol::ERR_ART_DOES_NOT_EXIST;
+
+		}else{
+			n->deleteArticle(idArt);
+			ret+= Protocol::ANS_ACK;
+		}
+	}
+
+	ret += Protocol::ANS_END;
+
+	writeString(ret,conn);
+}
+
+void getArticle(vector<Newsgroup*>& groups, Connection* conn){
+	unsigned int idgroup = readIntParameter(conn);
+	unsigned int idArt = readIntParameter(conn);
+	string ret;
+	ret += Protocol::ANS_GET_ART;
+	auto it = find_if(groups.begin(), groups.end(), [idgroup](Newsgroup* grp) {
+		return grp->getID() == idgroup;
+	});
+
+	if(it== groups.end()){
+		ret += Protocol::ANS_NAK;
+		ret += Protocol::ERR_NG_DOES_NOT_EXIST;
+	}else{		
+		Newsgroup *n = *it;
+		Article* a = (*n)[idArt];
+		if( a ==0){
+			ret+=Protocol::ANS_NAK;
+			ret += Protocol::ERR_ART_DOES_NOT_EXIST;
+
+		}else{			
+			ret+= Protocol::ANS_ACK;
+			writeStringParameter(a->getTitle(), ret);
+			writeStringParameter(a->getAuthor(), ret);
+			writeStringParameter(a->getText(), ret);
+		}
+	}
+
+	ret += Protocol::ANS_END;
+	writeString(ret,conn);
+}
+
+
 int main(int argc, char* argv[]){
 
 	if (argc != 2) {
@@ -221,22 +341,22 @@ int main(int argc, char* argv[]){
 						break;
 					case Protocol::COM_LIST_ART:
 					{
-
+						listArticles(groups, conn);
 					}
 						break;
 					case Protocol::COM_CREATE_ART:
 					{
-
+						createArticle(groups,conn);
 					}
 						break;
 					case Protocol::COM_DELETE_ART:
 					{
-
+						deleteArticle(groups,conn);
 					}
 						break;
 					case Protocol::COM_GET_ART:
 					{
-
+						getArticle(groups,conn);
 					}
 						break;
 					case Protocol::COM_END:
