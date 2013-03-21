@@ -26,41 +26,47 @@ unsigned char readCommand(Connection* conn)
 	unsigned char cmd = conn->read();
 	return cmd;
 }
-unsigned char readIntParameter(Connection* conn) 
+int readNumber(Connection* conn) {
+    unsigned char byte1 = conn->read();
+    unsigned char byte2 = conn->read();
+    unsigned char byte3 = conn->read();
+    unsigned char byte4 = conn->read();
+    return (byte1 << 24) | (byte2 << 16) | 
+        (byte3 << 8) | byte4;
+}
+void writeNumber(int num, string& s) {
+
+#define w(off) { \
+	unsigned char c = static_cast<unsigned char>(num >> off); \
+	s += c; }
+
+	w(24);
+	w(16);
+	w(8);
+	w(0);
+}
+int readIntParameter(Connection* conn) 
 	throw(ConnectionClosedException){
 	
 	unsigned char pn = conn->read();
 	assert(pn == Protocol::PAR_NUM);
-	unsigned char num = conn->read();
 
-	return num;
+	return readNumber(conn);
 }
 string readStringParameter(Connection* conn) 
 	throw(ConnectionClosedException){
 	
 	unsigned char ps = conn->read();
 
-	cout << "should be 40 = " << ps << endl;
 	assert(ps == Protocol::PAR_STRING);
 
-	unsigned char num = conn->read();
-	cout << "str num = <" << num << ">" << endl;;
-
-	int numInt = static_cast<int>(num);
-
-	cout << "int representation = <" << numInt << ">" << endl;
+	int num = readNumber(conn);
 
 	string ret;
 	for (int i = 0; i < num; ++i)
 	{
 		unsigned char c = conn->read();
-		cout << "read string part " << c << endl;
 		ret += c;
-	}
-
-	while (1) {
-		unsigned char c = conn->read();
-		cout << "read char <" << c << ">, (int) = " << ((int)c) << endl;
 	}
 
 	return ret;
@@ -78,27 +84,26 @@ void listNewsGroups(const vector<Newsgroup*>& groups, Connection* conn)
 	throw(ConnectionClosedException) {
 	string ret;
 
-	cout << "HEJ" << endl;
+	cout << "listing all " << groups.size() << " groups!" << endl;
 
 	ret += Protocol::ANS_LIST_NG;
 
 	ret += Protocol::PAR_NUM;
-	ret += groups.size();
+	writeNumber(groups.size(), ret);
 
 	for (auto it = groups.begin(); it != groups.end(); ++it) {
 		Newsgroup* grp = *it;
 
 		ret += Protocol::PAR_NUM;
-		ret += grp->getID(); 
+		writeNumber(grp->getID(), ret);
 
 		ret += Protocol::PAR_STRING;
-		ret += grp->getName().size(); 		
+		writeNumber(grp->getName().size(), ret);
 		ret += grp->getName(); 
 	}
 	ret += Protocol::ANS_END;
 
-	cout << "listNewsGroups answering with: " << ret << endl;
-	cout << "l = " << ret.size() << endl;
+	cout << "answering: " << ret << endl;
 
 	writeString(ret, conn);
 }
