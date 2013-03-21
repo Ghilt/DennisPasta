@@ -38,33 +38,21 @@ namespace client_server {
     	return id;
     }
 
-    const Article* Newsgroup::operator[](unsigned int i) const{
-
-    	for(auto it = articles.begin(); it != articles.end(); ++it){
-    		unsigned int art_id = (*it)->getID();
-    		if(art_id == i)
-    			return (*it);
-    	}
-
-    	return 0;
-    }
-
-    Article* Newsgroup::operator[](unsigned int i){
-
-    	for(auto it = articles.begin(); it != articles.end(); ++it){
-    		unsigned int art_id = (*it)->getID();
-    		if(art_id == i)
-    			return (*it);
-    	}
-
-    	return 0;
+    Article* Newsgroup::operator[](unsigned int pos){
+        return articles[pos];
     }
 
     int Newsgroup::size() const{
         return articles.size();
     }
 
-    Article* Newsgroup::getArticle(int index) const{
-        return articles[index];
+    Article* Newsgroup::getArticle(unsigned int id) const{
+        auto it = find_if(articles.begin(), articles.end(), [id](Article* a) {
+            return a->getID() == id;
+        });
+        if (it == articles.end())
+            return NULL;
+        else
+            return *it;
     }
 }
