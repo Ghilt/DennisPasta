@@ -13,6 +13,10 @@
 #include "dirent.h"
 #include <cstring>
 #include <fstream>
+#include <cerrno>
+
+#include <sys/types.h>
+#include <sys/stat.h>
 
 using namespace std;
 using protocol::Protocol;
@@ -23,6 +27,42 @@ using client_server::Newsgroup;
 using client_server::Article;
 
 #define UNUSED_PARAM(p) (void)p
+
+
+int remove_directory(string path){
+	DIR *d = opendir(path.c_str());
+
+	if (d){
+		cout << "We found a directory"<< endl;
+		dirent* dp = readdir(d);
+
+		while (dp != NULL) {
+			if(strcmp(dp->d_name, ".") != 0 && strcmp(dp->d_name, "..") != 0){					
+				string s = path + "/" +dp->d_name;
+				DIR *t = opendir(s.c_str());
+				if(t){
+					cout << "visiting " << s << endl;
+					remove_directory(s.c_str());
+					rmdir(s.c_str());
+				}else {
+					unlink(s.c_str());
+					cout << "deleting " << s << endl;
+				}
+				closedir(t);
+			}
+			dp = readdir(d);
+		}
+		closedir(d);
+	
+	}  else {
+
+		cout << "got error <" << errno << ">" << endl;
+	}
+
+	return 0;
+
+}
+
 
 unsigned int currNewsGroupID = 0;
 
@@ -211,6 +251,9 @@ void createArticle(vector<Newsgroup*>& groups, Connection* conn){
 	if(it== groups.end()){
 		ret += Protocol::ANS_NAK;
 		ret += Protocol::ERR_NG_DOES_NOT_EXIST;
+		readStringParameter(conn),
+		readStringParameter(conn), 
+		readStringParameter(conn);	
 	}else{
 		ret += Protocol::ANS_ACK;
 		Newsgroup *n = *it;
@@ -289,7 +332,6 @@ void getArticle(vector<Newsgroup*>& groups, Connection* conn){
 
 
 int main(int argc, char* argv[]){
-
 	if (argc != 2) {
 		cerr << "Usage: newsserver port-number" << endl;
 		exit(1);
@@ -450,6 +492,7 @@ int main(int argc, char* argv[]){
 
 #ifdef DISK_SERVER
 				//save
+				remove_directory("./db/");
 				if (shouldSave) {
 					cout << "should save!" << endl;	
 				}
@@ -468,4 +511,5 @@ int main(int argc, char* argv[]){
 		}
 	}
 }
+
 
