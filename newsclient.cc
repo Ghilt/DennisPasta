@@ -177,6 +177,7 @@ string listArticles(Connection* conn){
 
         unsigned int numberOfArts = readIntParameter(conn);
 
+//if noa == 0 skriv ut
         for(size_t i = 0; i < numberOfArts; ++i){
 
             string temp;
@@ -311,9 +312,53 @@ string deleteArticle(Connection* conn){
     return ret;
 }
 string getArticle(Connection* conn){
+    
+    string com;
+    com += Protocol::COM_GET_ART;
+    string num;
+    getline(cin, num);
+    stringstream ss(num);
 
-    conn->read();
-    return "";
+    for (int i=0; i<2; ++i){
+        com += Protocol::PAR_NUM;
+        int n;
+        ss >> n;
+        writeNumber(n, com);
+    }
+
+    com += Protocol::COM_END;
+    writeString(com, conn);
+
+
+    unsigned char ans = conn->read();
+    assert(ans == Protocol::ANS_GET_ART);
+
+    string ret;
+
+    unsigned char success = conn->read();
+
+    if(success == Protocol::ANS_ACK){
+
+        ret += "Title: "   + readStringParameter(conn) + "\n";
+        ret += "Author: "  + readStringParameter(conn) + "\n";
+        ret += "Message: " + readStringParameter(conn) + "\n";
+
+    } else {
+        ret = "Error: ";
+        unsigned char err = conn->read();
+        if(err == Protocol::ERR_NG_DOES_NOT_EXIST){
+            ret += "Newsgroup doesn't exist";
+        } else if (err == Protocol::ERR_ART_DOES_NOT_EXIST) {
+            ret += "Article doesn't exist";
+        } else {
+            ret += "dunno :(";
+        }
+    }
+
+    unsigned char end = conn->read();
+    assert(end == Protocol::ANS_END);
+
+    return ret;
 }
 
 
@@ -375,6 +420,8 @@ int main(int argc, char* argv[]) {
         exit(1);
     }
     
+    bool keepRunning = true;
+
     cout << "Type a command:" << endl <<
     "1: List Newsgroups" << endl <<
     "2 <name>: Create Newsgroup" << endl <<
@@ -382,9 +429,10 @@ int main(int argc, char* argv[]) {
     "4 <newsgroup>: List articles" << endl <<
     "5 <name>: Create Article" << endl <<
     "6 <name>: Delete Article" << endl <<
-    "7 <id>: Get Article" << endl;
+    "7 <id>: Get Article" << endl << 
+    "8: Quit" << endl;
     int nbr;
-    while (cin >> nbr) {
+    while (keepRunning && cin >> nbr) {
 
         try{
             string ans;
@@ -425,6 +473,12 @@ int main(int argc, char* argv[]) {
                     ans = getArticle(conn);
                 }
                 break;
+                case 8:
+                {
+                    keepRunning = false;
+                    ans = "Quitting. Thanks for participating in this awesome newsgroup forum megamash dot com";
+                }
+                break;
                 default:
                 {
                     cerr << "Software do not recognise command" << nbr << ", exiting. //Adam" << endl;
@@ -440,7 +494,17 @@ int main(int argc, char* argv[]) {
             cerr << "Server closed down!" << endl;
             exit(1);
         }
-        cout << "Type a command: ";
+        cout << "Type a command:" << endl <<
+    "1: List Newsgroups" << endl <<
+    "2 <name>: Create Newsgroup" << endl <<
+    "3 <name>: Delete Newsgroup" << endl <<
+    "4 <newsgroup>: List articles" << endl <<
+    "5 <name>: Create Article" << endl <<
+    "6 <name>: Delete Article" << endl <<
+    "7 <id>: Get Article" << endl << 
+    "8: Quit" << endl;
+        cout << "> ";
     }
+    delete conn;
 }
 
