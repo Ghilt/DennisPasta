@@ -16,6 +16,15 @@ using client_server::Connection;
 using client_server::ConnectionClosedException;
 
 
+#define detailedAssert(cond, mes) \
+    if(cond) { \
+        cerr << mes << endl; \
+        exit(1); \
+    }
+
+#define serverAssert(cond) \
+    detailedAssert(cond, "Server has given an invalid response.")
+
 int readNumber(Connection* conn) {
     unsigned char byte1 = conn->read();
     unsigned char byte2 = conn->read();
@@ -37,7 +46,7 @@ int readIntParameter(Connection* conn)
 throw(ConnectionClosedException){
 
     unsigned char pn = conn->read();
-    assert(pn == Protocol::PAR_NUM);
+    serverAssert(pn == Protocol::PAR_NUM);
 
     return readNumber(conn);
 }
@@ -46,7 +55,7 @@ throw(ConnectionClosedException){
 
     unsigned char ps = conn->read();
 
-    assert(ps == Protocol::PAR_STRING);
+    serverAssert(ps == Protocol::PAR_STRING);
 
     int num = readNumber(conn);
 
@@ -72,6 +81,8 @@ void writeNumber(int num, string& s) {
     w(0);
 }
 
+
+
 string listNewsgroup(Connection* conn)
 throw(ConnectionClosedException){
     string com;
@@ -82,7 +93,10 @@ throw(ConnectionClosedException){
     
 
     unsigned char ans = conn->read();
-    assert(ans == Protocol::ANS_LIST_NG);
+
+    if(ans != Protocol::ANS_LIST_NG){    
+    }
+    serverAssert(ans == Protocol::ANS_LIST_NG);
 
 
     string ret;
@@ -102,7 +116,7 @@ throw(ConnectionClosedException){
     }
 
     unsigned char end = conn->read();
-    assert(end == Protocol::ANS_END);
+    serverAssert(end == Protocol::ANS_END);
    
     return ret;
 }
@@ -124,7 +138,7 @@ string deleteNewsgroup(Connection* conn){
     writeString(com, conn);
 
     unsigned char ans = conn->read();
-    assert(ans == Protocol::ANS_DELETE_NG);
+    serverAssert(ans == Protocol::ANS_DELETE_NG);
     
     string ret;
 
@@ -135,15 +149,12 @@ string deleteNewsgroup(Connection* conn){
     } else {
         ret = "Error: ";
         unsigned char err = conn->read();
-        if(err == Protocol::ERR_NG_DOES_NOT_EXIST){
-            ret += "Newsgroup doesn't exist";
-        } else{
-            ret += "dunno :(";
-        }
+        serverAssert(err != Protocol::ERR_NG_DOES_NOT_EXIST);
+        ret += "Newsgroup doesn't exist";
     }
 
     unsigned char end = conn->read();
-    assert(end == Protocol::ANS_END);
+    serverAssert(end == Protocol::ANS_END);
 
     return ret;
 
@@ -167,7 +178,7 @@ string listArticles(Connection* conn){
 
 
     unsigned char ans = conn->read();
-    assert(ans == Protocol::ANS_LIST_ART);
+    serverAssert(ans == Protocol::ANS_LIST_ART);
 
     string ret;
 
@@ -195,15 +206,12 @@ string listArticles(Connection* conn){
     } else {
         ret = "Error: ";
         unsigned char err = conn->read();
-        if(err == Protocol::ERR_NG_DOES_NOT_EXIST){
-            ret += "Newsgroup doesn't exist";
-        } else{
-            ret += "dunno :(";
-        }
+        serverAssert(err != Protocol::ERR_NG_DOES_NOT_EXIST);
+        ret += "Newsgroup doesn't exist";
     }
 
     unsigned char end = conn->read();
-    assert(end == Protocol::ANS_END);
+    serverAssert(end == Protocol::ANS_END);
 
     return ret;
 
@@ -240,7 +248,7 @@ string createArticle(Connection* conn){
 
 
     unsigned char ans = conn->read();
-    assert(ans == Protocol::ANS_CREATE_ART);
+    serverAssert(ans == Protocol::ANS_CREATE_ART);
 
     string ret;
 
@@ -253,15 +261,12 @@ string createArticle(Connection* conn){
     } else {
         ret = "Error: ";
         unsigned char err = conn->read();
-        if(err == Protocol::ERR_NG_DOES_NOT_EXIST){
-            ret += "Newsgroup doesn't exist";
-        } else{
-            ret += "dunno :(";
-        }
+        serverAssert(err != Protocol::ERR_NG_DOES_NOT_EXIST);
+        ret += "Newsgroup doesn't exist";
     }
 
     unsigned char end = conn->read();
-    assert(end == Protocol::ANS_END);
+    serverAssert(end == Protocol::ANS_END);
 
     return ret;
 
@@ -284,7 +289,7 @@ string deleteArticle(Connection* conn){
     writeString(com, conn);
 
     unsigned char ans = conn->read();
-    assert(ans == Protocol::ANS_DELETE_ART);
+    serverAssert(ans == Protocol::ANS_DELETE_ART);
 
     string ret;
 
@@ -302,12 +307,12 @@ string deleteArticle(Connection* conn){
         } else if (err == Protocol::ERR_ART_DOES_NOT_EXIST) {
             ret += "Article doesn't exist";
         } else {
-            ret += "dunno :(";
+            serverAssert(false);
         }
     }
 
     unsigned char end = conn->read();
-    assert(end == Protocol::ANS_END);
+    serverAssert(end == Protocol::ANS_END);
 
     return ret;
 }
@@ -331,7 +336,7 @@ string getArticle(Connection* conn){
 
 
     unsigned char ans = conn->read();
-    assert(ans == Protocol::ANS_GET_ART);
+    serverAssert(ans == Protocol::ANS_GET_ART);
 
     string ret;
 
@@ -351,12 +356,12 @@ string getArticle(Connection* conn){
         } else if (err == Protocol::ERR_ART_DOES_NOT_EXIST) {
             ret += "Article doesn't exist";
         } else {
-            ret += "dunno :(";
+            serverAssert(false);
         }
     }
 
     unsigned char end = conn->read();
-    assert(end == Protocol::ANS_END);
+    serverAssert(end == Protocol::ANS_END);
 
     return ret;
 }
@@ -382,7 +387,7 @@ throw(ConnectionClosedException){
     writeString(com, conn);
 
     unsigned char ans = conn->read();
-    assert(ans == Protocol::ANS_CREATE_NG);
+    serverAssert(ans == Protocol::ANS_CREATE_NG);
     
     string ret;
 
@@ -393,15 +398,12 @@ throw(ConnectionClosedException){
     } else {
         ret = "Error: ";
         unsigned char err = conn->read();
-        if(err == Protocol::ERR_NG_ALREADY_EXISTS){
-            ret += "Newsgroup already exists";
-        } else{
-            ret += "dunno :(";
-        }
+        serverAssert(err != Protocol::ERR_NG_DOES_NOT_EXIST);
+        ret += "Newsgroup doesn't exist";
     }
 
     unsigned char end = conn->read();
-    assert(end == Protocol::ANS_END);
+    serverAssert(end == Protocol::ANS_END);
 
     return ret;
 }
@@ -423,14 +425,15 @@ int main(int argc, char* argv[]) {
     bool keepRunning = true;
 
     cout << "Type a command:" << endl <<
-    "1: List Newsgroups" << endl <<
-    "2 <name>: Create Newsgroup" << endl <<
-    "3 <name>: Delete Newsgroup" << endl <<
-    "4 <newsgroup>: List articles" << endl <<
-    "5 <name>: Create Article" << endl <<
-    "6 <name>: Delete Article" << endl <<
-    "7 <id>: Get Article" << endl << 
-    "8: Quit" << endl;
+    "List Newsgroups:\t1" << endl <<
+    "Create Newsgroup:\t2 <Name>" << endl <<
+    "Delete Newsgroup:\t3 <Newsgroup ID>" << endl <<
+    "List articles:\t\t4 <Newsgroup ID>" << endl <<
+    "Create Article:\t\t5 <Newsgroup ID>" << endl <<
+    "Delete Article:\t\t6 <Newsgroup ID, Article ID>" << endl <<
+    "Get Article:\t\t7 <Newsgroup ID, Article ID>" << endl << 
+    "Quit:\t\t\t8" << endl;
+        cout << "> ";
     int nbr;
     while (keepRunning && cin >> nbr) {
 
@@ -495,14 +498,14 @@ int main(int argc, char* argv[]) {
             exit(1);
         }
         cout << "Type a command:" << endl <<
-    "1: List Newsgroups" << endl <<
-    "2 <name>: Create Newsgroup" << endl <<
-    "3 <name>: Delete Newsgroup" << endl <<
-    "4 <newsgroup>: List articles" << endl <<
-    "5 <name>: Create Article" << endl <<
-    "6 <name>: Delete Article" << endl <<
-    "7 <id>: Get Article" << endl << 
-    "8: Quit" << endl;
+    "List Newsgroups:\t1" << endl <<
+    "Create Newsgroup:\t2 <Name>" << endl <<
+    "Delete Newsgroup:\t3 <Newsgroup ID>" << endl <<
+    "List articles:\t\t4 <Newsgroup ID>" << endl <<
+    "Create Article:\t\t5 <Newsgroup ID>" << endl <<
+    "Delete Article:\t\t6 <Newsgroup ID, Article ID>" << endl <<
+    "Get Article:\t\t7 <Newsgroup ID, Article ID>" << endl << 
+    "Quit:\t\t\t8" << endl;
         cout << "> ";
     }
     delete conn;
