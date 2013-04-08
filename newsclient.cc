@@ -17,7 +17,7 @@ using client_server::ConnectionClosedException;
 
 
 #define detailedAssert(cond, mes) \
-    if(cond) { \
+    if(!cond) { \
         cerr << mes << endl; \
         exit(1); \
     }
@@ -94,8 +94,6 @@ throw(ConnectionClosedException){
 
     unsigned char ans = conn->read();
 
-    if(ans != Protocol::ANS_LIST_NG){    
-    }
     serverAssert(ans == Protocol::ANS_LIST_NG);
 
 
@@ -149,7 +147,7 @@ string deleteNewsgroup(Connection* conn){
     } else {
         ret = "Error: ";
         unsigned char err = conn->read();
-        serverAssert(err != Protocol::ERR_NG_DOES_NOT_EXIST);
+        serverAssert(err == Protocol::ERR_NG_DOES_NOT_EXIST);
         ret += "Newsgroup doesn't exist";
     }
 
@@ -206,7 +204,7 @@ string listArticles(Connection* conn){
     } else {
         ret = "Error: ";
         unsigned char err = conn->read();
-        serverAssert(err != Protocol::ERR_NG_DOES_NOT_EXIST);
+        serverAssert(err == Protocol::ERR_NG_DOES_NOT_EXIST);
         ret += "Newsgroup doesn't exist";
     }
 
@@ -261,7 +259,7 @@ string createArticle(Connection* conn){
     } else {
         ret = "Error: ";
         unsigned char err = conn->read();
-        serverAssert(err != Protocol::ERR_NG_DOES_NOT_EXIST);
+        serverAssert(err == Protocol::ERR_NG_DOES_NOT_EXIST);
         ret += "Newsgroup doesn't exist";
     }
 
@@ -398,7 +396,7 @@ throw(ConnectionClosedException){
     } else {
         ret = "Error: ";
         unsigned char err = conn->read();
-        serverAssert(err != Protocol::ERR_NG_DOES_NOT_EXIST);
+        serverAssert(err == Protocol::ERR_NG_DOES_NOT_EXIST);
         ret += "Newsgroup doesn't exist";
     }
 
