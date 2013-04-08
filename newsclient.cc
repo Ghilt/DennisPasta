@@ -108,24 +108,207 @@ throw(ConnectionClosedException){
 }
 
 string deleteNewsgroup(Connection* conn){
-    conn->read();
-    return "";
+    string com;
+    com += Protocol::COM_DELETE_NG;
+    com += Protocol::PAR_NUM;
+    string num;
+
+    getline(cin, num);
+
+    num = num.substr(1,num.size()-1);
+
+
+    writeNumber(atoi(num.c_str()), com);
+    com += Protocol::COM_END;
+
+    writeString(com, conn);
+
+    unsigned char ans = conn->read();
+    assert(ans == Protocol::ANS_DELETE_NG);
+    
+    string ret;
+
+    unsigned char success = conn->read();
+
+    if(success == Protocol::ANS_ACK){
+        ret = "Newsgroup deleted successfully";
+    } else {
+        ret = "Error: ";
+        unsigned char err = conn->read();
+        if(err == Protocol::ERR_NG_DOES_NOT_EXIST){
+            ret += "Newsgroup doesn't exist";
+        } else{
+            ret += "dunno :(";
+        }
+    }
+
+    unsigned char end = conn->read();
+    assert(end == Protocol::ANS_END);
+
+    return ret;
 
 }
 string listArticles(Connection* conn){
-    conn->read();
-    return "";
-    
+
+    string com;
+    com += Protocol::COM_LIST_ART;
+    com += Protocol::PAR_NUM;
+    string num;
+
+    getline(cin, num);
+
+    num = num.substr(1,num.size()-1);
+
+
+    writeNumber(atoi(num.c_str()), com);
+    com += Protocol::COM_END;
+
+    writeString(com, conn);
+
+
+    unsigned char ans = conn->read();
+    assert(ans == Protocol::ANS_LIST_ART);
+
+    string ret;
+
+    unsigned char success = conn->read();
+
+    if(success == Protocol::ANS_ACK){
+
+        unsigned int numberOfArts = readIntParameter(conn);
+
+        for(size_t i = 0; i < numberOfArts; ++i){
+
+            string temp;
+            int id = readIntParameter(conn);
+            stringstream ss;
+            ss << id;
+            ss >> temp;
+            ret += temp;
+            ret += " ";
+            ret += readStringParameter(conn);
+            ret += "\n";
+
+        }
+
+    } else {
+        ret = "Error: ";
+        unsigned char err = conn->read();
+        if(err == Protocol::ERR_NG_DOES_NOT_EXIST){
+            ret += "Newsgroup doesn't exist";
+        } else{
+            ret += "dunno :(";
+        }
+    }
+
+    unsigned char end = conn->read();
+    assert(end == Protocol::ANS_END);
+
+    return ret;
+
+
+
+
 }
 string createArticle(Connection* conn){
-    conn->read();
-    return "";
-    
+
+    string com;
+    com += Protocol::COM_CREATE_ART;
+    com += Protocol::PAR_NUM;
+    string num;
+
+    getline(cin, num);
+    num = num.substr(1,num.size()-1);
+    writeNumber(atoi(num.c_str()), com);
+
+#define r(type) \
+    cout << "Article " #type ": "; \
+    string type; \
+    getline(cin, type); \
+    com += Protocol::PAR_STRING; \
+    writeNumber(type.size(), com); \
+    com += type;
+
+    r(title);
+    r(author);
+    r(text);
+
+    com += Protocol::COM_END;
+
+    writeString(com, conn);
+
+
+    unsigned char ans = conn->read();
+    assert(ans == Protocol::ANS_CREATE_ART);
+
+    string ret;
+
+    unsigned char success = conn->read();
+
+    if(success == Protocol::ANS_ACK){
+
+        ret += "Article created successfully";
+
+    } else {
+        ret = "Error: ";
+        unsigned char err = conn->read();
+        if(err == Protocol::ERR_NG_DOES_NOT_EXIST){
+            ret += "Newsgroup doesn't exist";
+        } else{
+            ret += "dunno :(";
+        }
+    }
+
+    unsigned char end = conn->read();
+    assert(end == Protocol::ANS_END);
+
+    return ret;
+
 }
 string deleteArticle(Connection* conn){
+    string com;
+    com += Protocol::COM_DELETE_ART;
+    string num;
+    getline(cin, num);
+    stringstream ss(num);
 
-    conn->read();
-    return "";    
+    for (int i=0; i<2; ++i){
+        com += Protocol::PAR_NUM;
+        int n;
+        ss >> n;
+        writeNumber(n, com);
+    }
+
+    com += Protocol::COM_END;
+    writeString(com, conn);
+
+    unsigned char ans = conn->read();
+    assert(ans == Protocol::ANS_DELETE_ART);
+
+    string ret;
+
+    unsigned char success = conn->read();
+
+    if(success == Protocol::ANS_ACK){
+
+        ret += "Article deleted successfully";
+
+    } else {
+        ret = "Error: ";
+        unsigned char err = conn->read();
+        if(err == Protocol::ERR_NG_DOES_NOT_EXIST){
+            ret += "Newsgroup doesn't exist";
+        } else if (err == Protocol::ERR_ART_DOES_NOT_EXIST) {
+            ret += "Article doesn't exist";
+        } else {
+            ret += "dunno :(";
+        }
+    }
+
+    unsigned char end = conn->read();
+    assert(end == Protocol::ANS_END);
+
+    return ret;
 }
 string getArticle(Connection* conn){
 
@@ -163,7 +346,7 @@ throw(ConnectionClosedException){
     if(success == Protocol::ANS_ACK){
         ret = "Newsgroup created successfully";
     } else {
-        ret = "Error is: ";
+        ret = "Error: ";
         unsigned char err = conn->read();
         if(err == Protocol::ERR_NG_ALREADY_EXISTS){
             ret += "Newsgroup already exists";
@@ -192,7 +375,14 @@ int main(int argc, char* argv[]) {
         exit(1);
     }
     
-    cout << "Type a command: ";
+    cout << "Type a command:" << endl <<
+    "1: List Newsgroups" << endl <<
+    "2 <name>: Create Newsgroup" << endl <<
+    "3 <name>: Delete Newsgroup" << endl <<
+    "4 <newsgroup>: List articles" << endl <<
+    "5 <name>: Create Article" << endl <<
+    "6 <name>: Delete Article" << endl <<
+    "7 <id>: Get Article" << endl;
     int nbr;
     while (cin >> nbr) {
 
