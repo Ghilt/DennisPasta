@@ -381,7 +381,7 @@ int main(int argc, char* argv[]){
 				cout << groupDir.str() << endl;
 				DIR *group = opendir(groupDir.str().c_str());
 				groupDir << "/info";
-				ifstream nameStream(groupDir.str());
+				ifstream nameStream(groupDir.str().c_str());
 				string name;
 				string idPos;
 				getline(nameStream, name);
@@ -410,7 +410,7 @@ int main(int argc, char* argv[]){
 						file += "/";
 						file += article->d_name;
 
-						ifstream articleFile(file);
+						ifstream articleFile(file.c_str());
 
 						string title;
 						string author;
@@ -527,7 +527,7 @@ int main(int argc, char* argv[]){
 						mkdir(ss.str().c_str(), S_IRWXU|S_IRGRP|S_IXGRP);
 
 						ofstream myfile;
-  						myfile.open (ss.str() + "/info");
+  						myfile.open ((ss.str() + "/info").c_str());
  						myfile << grp->getName() << "\n" << grp->getCurrentArticleId();
   						myfile.close(); 						
 						
@@ -541,7 +541,7 @@ int main(int argc, char* argv[]){
   							
   							res << ss.str()+"/";
   							res << a->getID();
-  							myfile.open(res.str());
+  							myfile.open(res.str().c_str());
  							myfile << a->getTitle() << "\n" << a->getAuthor() << "\n" << a->getText();
   							myfile.close(); 
   						}
