@@ -15,7 +15,6 @@ using namespace std;
 using client_server::Connection;
 using client_server::ConnectionClosedException;
 
-
 #define detailedAssert(cond, mes) \
     if(!cond) { \
         cerr << mes << endl; \
@@ -24,6 +23,54 @@ using client_server::ConnectionClosedException;
 
 #define serverAssert(cond) \
     detailedAssert(cond, "Server has given an invalid response.")
+
+
+class CommandReader
+{
+public:    
+
+    CommandReader(string src) : ss(src) {
+        
+    }
+
+    int readInt() {
+        int ret;
+        ss >> ret;
+
+        detailedAssert(ss, "Expected id");
+        return ret;
+    }
+    string readString() {
+        string ret;
+        ss >> ret;
+
+        detailedAssert(ss, "Expected id");
+
+        return ret;
+    }
+    string readLongString() {
+        string ret("");
+        bool first = true;
+        while (ss) {
+            string tmp;
+            ss >> tmp;
+
+            if (!ss)
+                break;
+            
+            if (!first)
+                ret += " ";
+            first = false;
+
+            ret += tmp;
+        }
+        detailedAssert(ret.size() > 0, "Expected name");
+        return ret;
+    }
+private:
+    stringstream ss;
+
+};
 
 int readNumber(Connection* conn) {
     unsigned char byte1 = conn->read();
@@ -83,8 +130,10 @@ void writeNumber(int num, string& s) {
 
 
 
-string listNewsgroup(Connection* conn)
+string listNewsgroup(Connection* conn, CommandReader& reader)
 throw(ConnectionClosedException){
+    (void)reader;
+
     string com;
 
     com += Protocol::COM_LIST_NG;
@@ -119,16 +168,11 @@ throw(ConnectionClosedException){
     return ret;
 }
 
-string deleteNewsgroup(Connection* conn){
+string deleteNewsgroup(Connection* conn, CommandReader& reader){
     string com;
     com += Protocol::COM_DELETE_NG;
     com += Protocol::PAR_NUM;
-    string num;
-
-    getline(cin, num);
-
-    num = num.substr(1,num.size()-1);
-
+    string num = reader.readString();
 
     writeNumber(atoi(num.c_str()), com);
     com += Protocol::COM_END;
@@ -157,17 +201,12 @@ string deleteNewsgroup(Connection* conn){
     return ret;
 
 }
-string listArticles(Connection* conn){
+string listArticles(Connection* conn, CommandReader& reader){
 
     string com;
     com += Protocol::COM_LIST_ART;
     com += Protocol::PAR_NUM;
-    string num;
-
-    getline(cin, num);
-
-    num = num.substr(1,num.size()-1);
-
+    string num = reader.readString();
 
     writeNumber(atoi(num.c_str()), com);
     com += Protocol::COM_END;
@@ -217,15 +256,12 @@ string listArticles(Connection* conn){
 
 
 }
-string createArticle(Connection* conn){
+string createArticle(Connection* conn, CommandReader& reader){
 
     string com;
     com += Protocol::COM_CREATE_ART;
     com += Protocol::PAR_NUM;
-    string num;
-
-    getline(cin, num);
-    num = num.substr(1,num.size()-1);
+    string num = reader.readString();
     writeNumber(atoi(num.c_str()), com);
 
 #define r(type) \
@@ -269,18 +305,13 @@ string createArticle(Connection* conn){
     return ret;
 
 }
-string deleteArticle(Connection* conn){
+string deleteArticle(Connection* conn, CommandReader& reader){
     string com;
     com += Protocol::COM_DELETE_ART;
-    string num;
-    getline(cin, num);
-    stringstream ss(num);
 
     for (int i=0; i<2; ++i){
         com += Protocol::PAR_NUM;
-        int n;
-        ss >> n;
-        writeNumber(n, com);
+        writeNumber(reader.readInt(), com);
     }
 
     com += Protocol::COM_END;
@@ -314,19 +345,14 @@ string deleteArticle(Connection* conn){
 
     return ret;
 }
-string getArticle(Connection* conn){
+string getArticle(Connection* conn, CommandReader& reader){
     
     string com;
     com += Protocol::COM_GET_ART;
-    string num;
-    getline(cin, num);
-    stringstream ss(num);
-
+    
     for (int i=0; i<2; ++i){
         com += Protocol::PAR_NUM;
-        int n;
-        ss >> n;
-        writeNumber(n, com);
+        writeNumber(reader.readInt(), com);
     }
 
     com += Protocol::COM_END;
@@ -365,32 +391,27 @@ string getArticle(Connection* conn){
 }
 
 
-string createNewsgroup(Connection* conn)
+string createNewsgroup(Connection* conn, CommandReader& reader)
 throw(ConnectionClosedException){
     string com;
     com += Protocol::COM_CREATE_NG;
     com += Protocol::PAR_STRING;
-    string ng_name, num;
-
-    getline(cin, ng_name);
-
-    ng_name = ng_name.substr(1,ng_name.size()-1);
-
-
-    writeNumber(ng_name.size(), num);
-    com += num;
+    string ng_name = reader.readLongString();
+    
+    writeNumber(ng_name.size(), com);
     com += ng_name;
     com += Protocol::COM_END;
 
     writeString(com, conn);
 
     unsigned char ans = conn->read();
-    serverAssert(ans == Protocol::ANS_CREATE_NG);
-    
-    string ret;
 
+    serverAssert(ans == Protocol::ANS_CREATE_NG);
+
+    string ret;
     unsigned char success = conn->read();
 
+    
     if(success == Protocol::ANS_ACK){
         ret = "Newsgroup created successfully";
     } else {
@@ -432,8 +453,12 @@ int main(int argc, char* argv[]) {
     "Get Article:\t\t7 <Newsgroup ID, Article ID>" << endl << 
     "Quit:\t\t\t8" << endl;
         cout << "> ";
-    int nbr;
-    while (keepRunning && cin >> nbr) {
+    string line;
+    while (keepRunning) {
+        getline(cin, line);
+        CommandReader cr(line);
+
+        int nbr = cr.readInt();
 
         try{
             string ans;
@@ -441,37 +466,37 @@ int main(int argc, char* argv[]) {
             switch (nbr) {
                 case Protocol::COM_LIST_NG:
                 {
-                    ans = listNewsgroup(conn);
+                    ans = listNewsgroup(conn, cr);
                 }
                 break;
                 case Protocol::COM_CREATE_NG:
                 {
-                    ans = createNewsgroup(conn);
+                    ans = createNewsgroup(conn, cr);
                 }
                 break;
                 case Protocol::COM_DELETE_NG:
                 {
-                   ans = deleteNewsgroup(conn);
+                   ans = deleteNewsgroup(conn, cr);
                 }
                 break;
                 case Protocol::COM_LIST_ART:
                 {
-                   ans = listArticles(conn);
+                   ans = listArticles(conn, cr);
                 }
                 break;
                 case Protocol::COM_CREATE_ART:
                 {
-                    ans = createArticle(conn);
+                    ans = createArticle(conn, cr);
                 }
                 break;
                 case Protocol::COM_DELETE_ART:
                 {
-                    ans = deleteArticle(conn);
+                    ans = deleteArticle(conn, cr);
                 }
                 break;
                 case Protocol::COM_GET_ART:
                 {
-                    ans = getArticle(conn);
+                    ans = getArticle(conn, cr);
                 }
                 break;
                 case 8:
@@ -482,7 +507,7 @@ int main(int argc, char* argv[]) {
                 break;
                 default:
                 {
-                    cerr << "Software do not recognise command" << nbr << ", exiting. //Adam" << endl;
+                    cerr << "Software do not recognise command \"" << nbr << "\", exiting. //Adam" << endl;
                     exit(1);
                 }
                 break;
