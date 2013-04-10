@@ -58,4 +58,8 @@ namespace client_server {
         else
             return *it;
     }
+
+    unsigned int Newsgroup::getCurrentArticleId() const{
+        return currentArticleID;
+    }
 }

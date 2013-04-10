@@ -34,6 +34,8 @@ namespace client_server {
 
         Article* getArticle(unsigned int id) const;
 
+        unsigned int getCurrentArticleId() const;
+
     private:
         /* unique name */
         string name;

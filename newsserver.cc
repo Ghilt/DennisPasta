@@ -14,6 +14,7 @@
 #include <cstring>
 #include <fstream>
 #include <cerrno>
+#include <sstream>
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -368,25 +369,39 @@ int main(int argc, char* argv[]){
 
 				cout << "found news group" << endl;
 
+
+
 				int id = atoi(dp->d_name);
-				string groupDir("./db/");
-				groupDir += dp->d_name;
+				stringstream groupDir;
+				groupDir << "./db/";
+				groupDir << dp->d_name;
+				//string groupDir("./db/");
+				//groupDir += dp->d_name;
 
-				DIR *group = opendir(groupDir.c_str());
-
-				groupDir += "/info";
-				ifstream nameStream(groupDir);
+				cout << groupDir.str() << endl;
+				DIR *group = opendir(groupDir.str().c_str());
+				groupDir << "/info";
+				ifstream nameStream(groupDir.str());
 				string name;
 				string idPos;
 				getline(nameStream, name);
 				getline(nameStream, idPos);
+				
 				nameStream.close();
 
 				Newsgroup* ng = new Newsgroup(name, id, atoi(idPos.c_str()));
 
+				cout << "1" << endl;
+
+				if(group)	
+					cout << "4" << endl;
+
 				dirent* article = readdir(group);
 
+				cout << "2" << endl;
+
 				while (article != NULL) {
+					cout << "in article while loop" << endl;
 					if (strcmp(article->d_name, "info") != 0 &&
 						strcmp(article->d_name, ".") != 0 &&
 						strcmp(article->d_name, "..") != 0) {
@@ -492,9 +507,48 @@ int main(int argc, char* argv[]){
 
 #ifdef DISK_SERVER
 				//save
-				remove_directory("./db/");
+
 				if (shouldSave) {
-					cout << "should save!" << endl;	
+					remove_directory("./db/");					
+					cout << "should save!" << endl;
+					ofstream myfile;
+  					myfile.open ("./db/info");
+ 					myfile << currNewsGroupID;
+  					myfile.close(); 
+
+					for (auto it = groups.begin(); it != groups.end(); ++it) {
+						Newsgroup* grp = *it;
+						stringstream ss;
+
+						ss << "./db/";
+						unsigned int id = grp->getID();
+						cout << "ID is: "  << id << endl;
+						ss << id;
+						mkdir(ss.str().c_str(), S_IRWXU|S_IRGRP|S_IXGRP);
+
+						ofstream myfile;
+  						myfile.open (ss.str() + "/info");
+ 						myfile << grp->getName() << "\n" << grp->getCurrentArticleId();
+  						myfile.close(); 						
+						
+
+  						for(int i = 0; i < grp->size(); ++i ){
+  							Article *a = (*grp)[i];
+
+  							ofstream myfile;
+  							stringstream res;
+
+  							
+  							res << ss.str()+"/";
+  							res << a->getID();
+  							myfile.open(res.str());
+ 							myfile << a->getTitle() << "\n" << a->getAuthor() << "\n" << a->getText();
+  							myfile.close(); 
+  						}
+
+
+					}
+
 				}
 #else
 				UNUSED_PARAM(shouldSave);
