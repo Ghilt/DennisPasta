@@ -16,7 +16,7 @@ using client_server::Connection;
 using client_server::ConnectionClosedException;
 
 #define detailedAssert(cond, mes) \
-    if(!cond) { \
+    if(!(cond)) { \
         cerr << mes << endl; \
         exit(1); \
     }
@@ -33,11 +33,17 @@ public:
         
     }
 
-    int readInt() {
-        int ret;
+    int readInt(const char* errMsg = "Expected id", bool crash = true) {
+        int ret = -1;
         ss >> ret;
 
-        detailedAssert(ss, "Expected id");
+        if (crash) {
+            detailedAssert(ss, errMsg);
+        } else {
+            if (!ss) {
+                cerr << errMsg << endl;
+            }
+        }
         return ret;
     }
     string readString() {
@@ -417,8 +423,8 @@ throw(ConnectionClosedException){
     } else {
         ret = "Error: ";
         unsigned char err = conn->read();
-        serverAssert(err == Protocol::ERR_NG_DOES_NOT_EXIST);
-        ret += "Newsgroup doesn't exist";
+        serverAssert(err == Protocol::ERR_NG_ALREADY_EXISTS);
+        ret += "Newsgroup already exists";
     }
 
     unsigned char end = conn->read();
@@ -455,12 +461,13 @@ int main(int argc, char* argv[]) {
         cout << "> ";
     string line;
     while (keepRunning) {
-        getline(cin, line);
-        CommandReader cr(line);
-
-        int nbr = cr.readInt();
-
+       
         try{
+            getline(cin, line);
+            CommandReader cr(line);
+
+            int nbr = cr.readInt("", false);
+
             string ans;
 
             switch (nbr) {
@@ -508,14 +515,13 @@ int main(int argc, char* argv[]) {
                 default:
                 {
                     cerr << "Software do not recognise command \"" << nbr << "\", exiting. //Adam" << endl;
-                    exit(1);
                 }
                 break;
             }
 
 
 
-            cout << ans << endl;
+            cout << "\n" << ans << "\n" << endl;
         } catch (ConnectionClosedException&){
             cerr << "Server closed down!" << endl;
             exit(1);

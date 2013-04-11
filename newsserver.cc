@@ -6,7 +6,6 @@
 #include <cstdlib>
 #include <limits>
 #include "newsgroup.h"
-#include <cassert>
 #include <algorithm>
 #include "protocol.h"
 #include "dirent.h"
@@ -28,6 +27,9 @@ using client_server::Article;
 
 #define UNUSED_PARAM(p) (void)p
 
+struct naughty_client {};
+
+#define clientAssert(cond) { if (!cond) { naughty_client ret; throw ret; } }
 
 int remove_directory(string path){
 	DIR *d = opendir(path.c_str());
@@ -95,7 +97,7 @@ int readIntParameter(Connection* conn)
 	throw(ConnectionClosedException){
 	
 	unsigned char pn = conn->read();
-	assert(pn == Protocol::PAR_NUM);
+	clientAssert(pn == Protocol::PAR_NUM);
 
 	return readNumber(conn);
 }
@@ -104,7 +106,7 @@ string readStringParameter(Connection* conn)
 	
 	unsigned char ps = conn->read();
 
-	assert(ps == Protocol::PAR_STRING);
+	clientAssert(ps == Protocol::PAR_STRING);
 
 	int num = readNumber(conn);
 
@@ -453,56 +455,65 @@ int main(int argc, char* argv[]){
 			try {
 				unsigned int nbr = readCommand(conn);
 				bool shouldSave = false;
-				switch (nbr) {
-					case Protocol::COM_LIST_NG:
-					{
-						listNewsGroups(groups, conn);
-					}
-						break;
-					case Protocol::COM_CREATE_NG:
-					{
-						createNewsGroup(groups, conn);
-						shouldSave = true;
-					}
-						break;
-					case Protocol::COM_DELETE_NG:
-					{
-						deleteNewsGroup(groups, conn);
-						shouldSave = true;
-					}
-						break;
-					case Protocol::COM_LIST_ART:
-					{
-						listArticles(groups, conn);
-					}
-						break;
-					case Protocol::COM_CREATE_ART:
-					{
-						createArticle(groups,conn);
-						shouldSave = true;
-					}
-						break;
-					case Protocol::COM_DELETE_ART:
-					{
-						deleteArticle(groups,conn);
-						shouldSave = true;
-					}
-						break;
-					case Protocol::COM_GET_ART:
-					{
-						getArticle(groups,conn);
-					}
-						break;
-					default:
-					{
-						cerr << "NewsServer recieved unrecognized code " << nbr << ", exiting. " << endl;
-						exit(1);
-					}
-						break;
-				}
-				unsigned int end = readCommand(conn);
 
-				assert(end == Protocol::COM_END);
+				try {
+					switch (nbr) {
+						case Protocol::COM_LIST_NG:
+						{
+							listNewsGroups(groups, conn);
+						}
+							break;
+						case Protocol::COM_CREATE_NG:
+						{
+							createNewsGroup(groups, conn);
+							shouldSave = true;
+						}
+							break;
+						case Protocol::COM_DELETE_NG:
+						{
+							deleteNewsGroup(groups, conn);
+							shouldSave = true;
+						}
+							break;
+						case Protocol::COM_LIST_ART:
+						{
+							listArticles(groups, conn);
+						}
+							break;
+						case Protocol::COM_CREATE_ART:
+						{
+							createArticle(groups,conn);
+							shouldSave = true;
+						}
+							break;
+						case Protocol::COM_DELETE_ART:
+						{
+							deleteArticle(groups,conn);
+							shouldSave = true;
+						}
+							break;
+						case Protocol::COM_GET_ART:
+						{
+							getArticle(groups,conn);
+						}
+							break;
+						default:
+						{
+							cerr << "NewsServer recieved unrecognized code " << nbr << ", exiting. " << endl;
+							clientAssert(false);
+						}
+							break;
+					}
+
+					unsigned int end = readCommand(conn);
+
+					clientAssert(end == Protocol::COM_END);
+
+				} catch (naughty_client& cli) {
+					cout << "Naughty client caught! You going to jail son." << endl;
+					server.deregisterConnection(conn);
+				}
+				
 
 #ifdef DISK_SERVER
 				//save
