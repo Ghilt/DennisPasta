@@ -21,17 +21,7 @@ namespace client_server {
     unsigned int Article::getID() const {
         return id;
     }
-
-        
-
 }
 
-/*
-
-        title = tit;
-        author = auth;
-        text = tex;
-        id = i;
-        */
 
 
