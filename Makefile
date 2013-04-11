@@ -14,7 +14,8 @@ SRC	= $(wildcard *.cc)
 
 .PHONY: all clean cleaner
 
-all: libclientserver.a baseserver diskserver newsclient
+all: libclientserver.a baseserver diskserver newsclient \
+	$(MV) baseserver bin/baseserver
 
 
 # Create the library; ranlib is for Darwin and maybe other systems.
