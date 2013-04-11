@@ -10,26 +10,30 @@ CXXFLAGS	+= -Wmissing-braces -Wparentheses
 # macros give warnings on "old-style-cast"
 #CXXFLAGS	+= -Wold-style-cast
 
-SRC	= $(wildcard *.cc)
+RES_DIR = bin/
+SRC	= $(wildcard src/*.cc)
 
 .PHONY: all clean cleaner
 
-all: libclientserver.a baseserver diskserver newsclient \
-	$(MV) baseserver bin/baseserver
+all: src/baseserver src/diskserver src/newsclient
+	mv src/baseserver $(RES_DIR)
+	mv src/diskserver $(RES_DIR)
+	mv src/newsclient $(RES_DIR)
+	
 
 
 # Create the library; ranlib is for Darwin and maybe other systems.
 # Doesn't seem to do any damage on other systems.
 
-libclientserver.a: connection.o server.o article.o newsgroup.o
-	ar rv libclientserver.a \
-	connection.o server.o article.o newsgroup.o
-	ranlib libclientserver.a
+#libclientserver.a: connection.o server.o article.o newsgroup.o
+#	ar rv libclientserver.a \
+#	connection.o server.o article.o newsgroup.o
+#	ranlib libclientserver.a
 
-baseserver: baseserver.o connection.o server.o newsgroup.o article.o
-diskserver: diskserver.o connection.o server.o newsgroup.o article.o
+src/baseserver: src/baseserver.o src/connection.o src/server.o src/newsgroup.o src/article.o
+src/diskserver: src/diskserver.o src/connection.o src/server.o src/newsgroup.o src/article.o
 
-newsclient: newsclient.o connection.o
+src/newsclient: src/newsclient.o src/connection.o
 
 clean:
 	$(RM) *.o
