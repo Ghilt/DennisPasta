@@ -1,4 +1,3 @@
-/* myserver.cc: sample server program */
 #include "server.h"
 #include "connection.h"
 #include "connectionclosedexception.h"
