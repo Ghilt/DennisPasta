@@ -55,10 +55,6 @@ int remove_directory(string path){
 			dp = readdir(d);
 		}
 		closedir(d);
-	
-	}  else {
-
-		cout << "got error <" << errno << ">" << endl;
 	}
 
 	return 0;
@@ -349,8 +345,6 @@ int main(int argc, char* argv[]){
 	currNewsGroupID = 0;
 #ifdef DISK_SERVER
 	//load
-
-	cout << "!loading!" << endl;
  
 	DIR *dir = opendir("./db/");
 	if (dir) {
@@ -519,7 +513,8 @@ int main(int argc, char* argv[]){
 				//save
 
 				if (shouldSave) {
-					remove_directory("./db/");					
+					remove_directory("./db/");
+					mkdir("./db/", S_IRWXU|S_IRGRP|S_IXGRP);	
 					cout << "should save!" << endl;
 					ofstream myfile;
   					myfile.open ("./db/info");
