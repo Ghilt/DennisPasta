@@ -5,7 +5,7 @@ unsigned int currNewsGroupID = 0;
 
 int main(int argc, char* argv[]){
 	if (argc != 2) {
-		cerr << "Usage: diskserver port-number" << endl;
+		cerr << "Usage: baseserver port-number" << endl;
 		exit(1);
 	}
 	Server server(atoi(argv[1]));
