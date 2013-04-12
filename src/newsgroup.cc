@@ -32,7 +32,9 @@ namespace client_server {
             return (a->getID() == id);
         });
         if(it!=articles.end()){
+            Article* a = *it;
             articles.erase(it);
+            delete a;
         }
     }
 

@@ -200,9 +200,10 @@ public:
 			ret += Protocol::ANS_NAK;
 			ret += Protocol::ERR_NG_DOES_NOT_EXIST;
 		} else {
+			Newsgroup* ng = *it;
 			groups.erase(it);
+			delete ng;
 			ret += Protocol::ANS_ACK;
-			
 		}
 		ret += Protocol::ANS_END;
 		writeString(ret, conn);

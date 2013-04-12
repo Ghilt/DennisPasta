@@ -112,8 +112,8 @@ int main(int argc, char* argv[]){
 				}
 
 				groups.push_back(ng);
+				closedir(group);
 			}
-
 			dp = readdir(dir);
 		}
 		closedir(dir);
@@ -124,7 +124,7 @@ int main(int argc, char* argv[]){
 	});
 
 
-	int num = 5;
+	int num = 10;
 	while (num-- > 0) {
 		Connection* conn = server.waitForActivity();
 		if (conn != 0) {
