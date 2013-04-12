@@ -514,7 +514,7 @@ int main(int argc, char* argv[]) {
                 break;
                 default:
                 {
-                    cerr << "Software do not recognise command \"" << nbr << "\", exiting. //Adam" << endl;
+                    cerr << "Software do not recognise command \"" << nbr << "\". Try again. //Adam" << endl;
                 }
                 break;
             }
