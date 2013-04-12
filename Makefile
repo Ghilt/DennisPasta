@@ -16,6 +16,7 @@ SRC	= $(wildcard src/*.cc)
 .PHONY: all clean cleaner
 
 all: src/baseserver src/diskserver src/newsclient
+	mkdir $(RES_DIR)
 	mv src/baseserver $(RES_DIR)
 	mv src/diskserver $(RES_DIR)
 	mv src/newsclient $(RES_DIR)
