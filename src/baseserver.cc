@@ -76,6 +76,7 @@ int main(int argc, char* argv[]){
 					clientAssert(end == Protocol::COM_END);
 
 				} catch (naughty_client& cli) {
+					cout << "Naughty client caught! Disconnecting him/her/hen." << endl;
 					server.deregisterConnection(conn);
 				}
 				
