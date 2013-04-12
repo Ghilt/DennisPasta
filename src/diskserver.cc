@@ -119,6 +119,10 @@ int main(int argc, char* argv[]){
 		closedir(dir);
 	}
 
+	std::sort(groups.begin(), groups.end(), [](const Newsgroup* lhs, const Newsgroup* rhs) {
+		return lhs->getID() < rhs->getID();
+	});
+
 
 	while (true) {
 		Connection* conn = server.waitForActivity();
