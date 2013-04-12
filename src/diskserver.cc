@@ -1,4 +1,4 @@
-#include "ServerCommandHandler.h"
+#include "servercommandhandler.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>

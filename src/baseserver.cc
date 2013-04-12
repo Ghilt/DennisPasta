@@ -1,4 +1,4 @@
-#include "ServerCommandHandler.h"
+#include "servercommandhandler.h"
 
 unsigned int currNewsGroupID = 0;
 
