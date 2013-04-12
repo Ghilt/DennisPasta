@@ -19,8 +19,7 @@ int main(int argc, char* argv[]){
 
 	currNewsGroupID = 0;
 
-	int cnt = 5;
-	while (cnt-- > 0) {
+	while (true) {
 		Connection* conn = server.waitForActivity();
 		if (conn != 0) {
 			try {

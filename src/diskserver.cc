@@ -124,8 +124,7 @@ int main(int argc, char* argv[]){
 	});
 
 
-	int num = 10;
-	while (num-- > 0) {
+	while (true) {
 		Connection* conn = server.waitForActivity();
 		if (conn != 0) {
 			try {
