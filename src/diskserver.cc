@@ -124,7 +124,8 @@ int main(int argc, char* argv[]){
 	});
 
 
-	while (true) {
+	int num = 5;
+	while (num-- > 0) {
 		Connection* conn = server.waitForActivity();
 		if (conn != 0) {
 			try {
@@ -243,6 +244,11 @@ int main(int argc, char* argv[]){
 			server.registerConnection(new Connection);
 			cout << "New client connects" << endl;
 		}
+	}
+
+	for (unsigned int i=0; i<groups.size(); ++i) {
+		Newsgroup* ng = groups[i];
+		delete ng;
 	}
 }
 
