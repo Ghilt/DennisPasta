@@ -15,10 +15,14 @@ using namespace std;
 using client_server::Connection;
 using client_server::ConnectionClosedException;
 
+struct bad_input {
+
+};
+
 #define detailedAssert(cond, mes) \
     if(!(cond)) { \
-        cerr << mes << endl; \
-        exit(1); \
+        cerr << "ERROR: " << mes << endl; \
+        throw bad_input(); \
     }
 
 #define serverAssert(cond) \
@@ -174,7 +178,8 @@ throw(ConnectionClosedException){
     return ret;
 }
 
-string deleteNewsgroup(Connection* conn, CommandReader& reader){
+string deleteNewsgroup(Connection* conn, CommandReader& reader)
+throw(ConnectionClosedException, bad_input) {
     string com;
     com += Protocol::COM_DELETE_NG;
     com += Protocol::PAR_NUM;
@@ -207,7 +212,8 @@ string deleteNewsgroup(Connection* conn, CommandReader& reader){
     return ret;
 
 }
-string listArticles(Connection* conn, CommandReader& reader){
+string listArticles(Connection* conn, CommandReader& reader)
+throw(ConnectionClosedException, bad_input) {
 
     string com;
     com += Protocol::COM_LIST_ART;
@@ -262,7 +268,8 @@ string listArticles(Connection* conn, CommandReader& reader){
 
 
 }
-string createArticle(Connection* conn, CommandReader& reader){
+string createArticle(Connection* conn, CommandReader& reader)
+throw(ConnectionClosedException, bad_input) {
 
     string com;
     com += Protocol::COM_CREATE_ART;
@@ -311,7 +318,9 @@ string createArticle(Connection* conn, CommandReader& reader){
     return ret;
 
 }
-string deleteArticle(Connection* conn, CommandReader& reader){
+string deleteArticle(Connection* conn, CommandReader& reader)
+throw(ConnectionClosedException, bad_input) {
+
     string com;
     com += Protocol::COM_DELETE_ART;
 
@@ -351,7 +360,8 @@ string deleteArticle(Connection* conn, CommandReader& reader){
 
     return ret;
 }
-string getArticle(Connection* conn, CommandReader& reader){
+string getArticle(Connection* conn, CommandReader& reader)
+throw(ConnectionClosedException, bad_input) {
     
     string com;
     com += Protocol::COM_GET_ART;
@@ -398,7 +408,7 @@ string getArticle(Connection* conn, CommandReader& reader){
 
 
 string createNewsgroup(Connection* conn, CommandReader& reader)
-throw(ConnectionClosedException){
+throw(ConnectionClosedException, bad_input) {
     string com;
     com += Protocol::COM_CREATE_NG;
     com += Protocol::PAR_STRING;
@@ -525,6 +535,9 @@ int main(int argc, char* argv[]) {
         } catch (ConnectionClosedException&){
             cerr << "Server closed down!" << endl;
             exit(1);
+        } catch (bad_input& in) {
+            //Do nothing, error message has already been printed
+            cout << endl; 
         }
         cout << "Type a command:" << endl <<
     "List Newsgroups:\t1" << endl <<
