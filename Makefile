@@ -31,7 +31,7 @@ all: src/baseserver src/diskserver src/newsclient
 #	connection.o server.o article.o newsgroup.o
 #	ranlib libclientserver.a
 
-src/baseserver: src/baseserver.o src/connection.o src/server.o src/newsgroup.o src/article.o
+src/baseserver: src/baseserver.o src/connection.o src/server.o src/newsgroup.o src/article.o src/servercommandhandler.o
 #src/diskserver: src/diskserver.o src/connection.o src/server.o src/newsgroup.o src/article.o
 
 src/newsclient: src/newsclient.o src/connection.o
