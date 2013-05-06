@@ -16,15 +16,17 @@ namespace client_server {
     	}
     }
 
-    void Newsgroup::createArticle(const string& text, const string& author, const string& title){
-        insertArticle(new Article(title, author, text, currentArticleID++));
+    Article* Newsgroup::createArticle(const string& text, const string& author, const string& title){
+        Article* a = new Article(title, author, text, currentArticleID++);
+        insertArticle(a);
+        return a;
     }
     void Newsgroup::insertArticle(Article* art) {
         articles.push_back(art);
 
-	sort(articles.begin(), articles.end(), [](const Article* lhs, const Article* rhs) {
-		return lhs->getID() < rhs->getID();
-	});
+    	sort(articles.begin(), articles.end(), [](const Article* lhs, const Article* rhs) {
+    		return lhs->getID() < rhs->getID();
+    	});
     }
 
     void Newsgroup::deleteArticle(const unsigned int id){

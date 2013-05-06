@@ -5,31 +5,7 @@
 
 unsigned int currNewsGroupID = 0;
 
-int remove_directory(string path){
-	DIR *d = opendir(path.c_str());
 
-	if (d){
-		dirent* dp = readdir(d);
-
-		while (dp != NULL) {
-			if(strcmp(dp->d_name, ".") != 0 && strcmp(dp->d_name, "..") != 0){					
-				string s = path + "/" +dp->d_name;
-				DIR *t = opendir(s.c_str());
-				if(t){
-					remove_directory(s.c_str());
-					rmdir(s.c_str());
-				}else {
-					unlink(s.c_str());
-				}
-				closedir(t);
-			}
-			dp = readdir(d);
-		}
-		closedir(d);
-	}
-
-	return 0;
-}
 
 int main(int argc, char* argv[]){
 	if (argc != 2) {

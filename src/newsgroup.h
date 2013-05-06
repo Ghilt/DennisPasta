@@ -19,7 +19,7 @@ namespace client_server {
 
         ~Newsgroup();
         
-        void createArticle(const string& title, const string& author, const string& text);
+        Article* createArticle(const string& title, const string& author, const string& text);
         void insertArticle(Article* art);
 
         void deleteArticle(const unsigned int id);

@@ -33,9 +33,15 @@ struct naughty_client {};
 class ServerCommandHandler
 {
 public:
-	ServerCommandHandler() {};
+	ServerCommandHandler() {
+		listener = NULL;
+	};
 	~ServerCommandHandler() {};
 
+
+	void setEventListener(const ServerEventListener* listener) {
+		this->listener = listener;
+	}
 
 	unsigned char readCommand(Connection* conn)
 		throw(ConnectionClosedException) {
@@ -178,6 +184,9 @@ public:
 		Newsgroup* newGroup = new Newsgroup(name, ++currNewsGroupID);
 		groups.push_back(newGroup);
 
+		if (listener)
+			listener->onCreatedNewsgroup(newGroup);
+
 		ret += Protocol::ANS_ACK;
 		ret += Protocol::ANS_END;
 
@@ -204,6 +213,9 @@ public:
 			groups.erase(it);
 			delete ng;
 			ret += Protocol::ANS_ACK;
+			
+			if (listener)
+				listener->onDeletednewsgroup(id);
 		}
 		ret += Protocol::ANS_END;
 		writeString(ret, conn);
@@ -226,10 +238,12 @@ public:
 		}else{
 			ret += Protocol::ANS_ACK;
 			Newsgroup *n = *it;
-			n->createArticle(
-				readStringParameter(conn),
-				readStringParameter(conn), 
-				readStringParameter(conn));	
+			Article* a = n->createArticle(
+								readStringParameter(conn),
+								readStringParameter(conn), 
+								readStringParameter(conn));	
+			if (listener)
+				listener->onCreatedArticle(n, a);
 		}
 
 		ret += Protocol::ANS_END;
@@ -260,6 +274,9 @@ public:
 			}else{
 				n->deleteArticle(idArt);
 				ret+= Protocol::ANS_ACK;
+
+				if (listener)
+					listener->onDeletedArticle(idgroup, idArt);
 			}
 		}
 
@@ -300,6 +317,8 @@ public:
 	}
 
 
+private:
+	ServerEventListener* listener;
 };
 
 
