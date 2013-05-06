@@ -8,7 +8,7 @@ class ServerCommandHandler;
 class ServerEventDiskWriter : public ServerEventListener{
 
 public:
-	ServerEventDiskWriter(ServerCommandHandler& sch);
+	ServerEventDiskWriter(ServerCommandHandler&);
 	~ServerEventDiskWriter();
 
 	virtual void onCreatedArticle(Newsgroup* grp, Article* art);

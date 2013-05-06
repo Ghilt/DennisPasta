@@ -1,8 +1,5 @@
 #include "servercommandhandler.h"
-#include "ServerEventDiskWriter.h"
-
-
-using namespace std;
+//#include "ServerEventDiskWriter.h"
 
 int main(int argc, char* argv[]){
 	if (argc != 2) {
@@ -16,8 +13,8 @@ int main(int argc, char* argv[]){
 		exit(1);
 	}
 	ServerCommandHandler sch;
-	ServerEventDiskWriter writer(sch);
-	sch.setEventListener(&writer);
+	//ServerEventListener* writer = new ServerEventDiskWriter(sch);
+	//sch.setEventListener(NULL);
 	sch.init(server);
 }
 

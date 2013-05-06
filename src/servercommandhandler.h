@@ -1,5 +1,5 @@
-
 #ifndef SERVER_COMMAND_HANDLER_H
+
 #define SERVER_COMMAND_HANDLER_H
 
 #include "server.h"
@@ -30,18 +30,13 @@ using client_server::Article;
 
 class ServerCommandHandler
 {
-private:
-	ServerEventListener* listener;
 
 public:
-
-	vector<Newsgroup*> groups;
-	unsigned int currNewsGroupID;
-
 	ServerCommandHandler();
 	~ServerCommandHandler();
 
-	
+	vector<Newsgroup*> groups;
+	unsigned int currNewsGroupID;
 
 	void setEventListener(ServerEventListener* listener);
 
@@ -85,7 +80,10 @@ public:
 
 	void getArticle(vector<Newsgroup*>& groups, Connection* conn);
 
-};
 
+private:
+	ServerEventListener* listener;
+
+};
 
 #endif

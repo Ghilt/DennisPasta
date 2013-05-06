@@ -6,391 +6,379 @@
 #define clientAssert(cond) { if (!cond) { naughty_client ret; throw ret; } }
 struct naughty_client {};
 
-class ServerCommandHandler
-{
-private:
-	ServerEventListener* listener;
-
-public:
-
-	vector<Newsgroup*> groups;
-	unsigned int currNewsGroupID;
-
-	ServerCommandHandler::ServerCommandHandler() : currNewsGroupID(0) {
-		listener = NULL;
-	};
-	ServerCommandHandler::~ServerCommandHandler() {};
-
-	
-
-	void ServerCommandHandler::setEventListener(ServerEventListener* listener) {
-		this->listener = listener;
-	}
+ServerCommandHandler::ServerCommandHandler() : currNewsGroupID(0) {
+	listener = NULL;
+};
+ServerCommandHandler::~ServerCommandHandler() {};
 
 
-	void ServerCommandHandler::init(Server& server){
 
-		cout << "sch.init" << endl;
+void ServerCommandHandler::setEventListener(ServerEventListener* listener) {
+	this->listener = listener;
+}
 
-		while (true) {
-			Connection* conn = server.waitForActivity();
-			if (conn != 0) {
+
+void ServerCommandHandler::init(Server& server){
+
+	cout << "sch.init" << endl;
+
+	while (true) {
+		Connection* conn = server.waitForActivity();
+		if (conn != 0) {
+			try {
+				unsigned int nbr = readCommand(conn);
+
+				cout << "read command " << nbr << endl;
 				try {
-					unsigned int nbr = readCommand(conn);
-
-					cout << "read command " << nbr << endl;
-					try {
-						switch (nbr) {
-							case Protocol::COM_LIST_NG:
-							{
-								listNewsGroups(groups, conn);
-							}
-							break;
-							case Protocol::COM_CREATE_NG:
-							{
-								createNewsGroup(groups, conn, currNewsGroupID);
-							}
-							break;
-							case Protocol::COM_DELETE_NG:
-							{
-								deleteNewsGroup(groups, conn);
-							}
-							break;
-							case Protocol::COM_LIST_ART:
-							{
-								listArticles(groups, conn);
-							}
-							break;
-							case Protocol::COM_CREATE_ART:
-							{
-								createArticle(groups,conn);
-							}
-							break;
-							case Protocol::COM_DELETE_ART:
-							{
-								deleteArticle(groups,conn);
-							}
-							break;
-							case Protocol::COM_GET_ART:
-							{
-								getArticle(groups,conn);
-							}
-							break;
-							default:
-							{
-								cerr << "NewsServer recieved unrecognized code " << nbr << ", exiting. " << endl;
-								clientAssert(false);
-							}
-							break;
+					switch (nbr) {
+						case Protocol::COM_LIST_NG:
+						{
+							listNewsGroups(groups, conn);
 						}
-
-						unsigned int end = readCommand(conn);
-
-						clientAssert(end == Protocol::COM_END);
-
-					} catch (naughty_client& cli) {
-						cout << "Naughty client caught! Disconnecting him/her/hen." << endl;
-						server.deregisterConnection(conn);
+						break;
+						case Protocol::COM_CREATE_NG:
+						{
+							createNewsGroup(groups, conn, currNewsGroupID);
+						}
+						break;
+						case Protocol::COM_DELETE_NG:
+						{
+							deleteNewsGroup(groups, conn);
+						}
+						break;
+						case Protocol::COM_LIST_ART:
+						{
+							listArticles(groups, conn);
+						}
+						break;
+						case Protocol::COM_CREATE_ART:
+						{
+							createArticle(groups,conn);
+						}
+						break;
+						case Protocol::COM_DELETE_ART:
+						{
+							deleteArticle(groups,conn);
+						}
+						break;
+						case Protocol::COM_GET_ART:
+						{
+							getArticle(groups,conn);
+						}
+						break;
+						default:
+						{
+							cerr << "NewsServer recieved unrecognized code " << nbr << ", exiting. " << endl;
+							clientAssert(false);
+						}
+						break;
 					}
 
+					unsigned int end = readCommand(conn);
 
-				} catch (ConnectionClosedException&) {
+					clientAssert(end == Protocol::COM_END);
+
+				} catch (naughty_client& cli) {
+					cout << "Naughty client caught! Disconnecting him/her/hen." << endl;
 					server.deregisterConnection(conn);
-					delete conn;
-					cout << "Client closed connection" << endl;
 				}
-			} else {
-				server.registerConnection(new Connection);
-				cout << "New client connects" << endl;
+
+
+			} catch (ConnectionClosedException&) {
+				server.deregisterConnection(conn);
+				delete conn;
+				cout << "Client closed connection" << endl;
 			}
-		}
-
-		for (unsigned int i=0; i<groups.size(); ++i) {
-			Newsgroup* ng = groups[i];
-			delete ng;
-		}
-
-	}; 
-
-	unsigned char ServerCommandHandler::readCommand(Connection* conn)
-	throw(ConnectionClosedException) {
-
-		unsigned char cmd = conn->read();
-		return cmd;
-	}
-	int ServerCommandHandler::readNumber(Connection* conn) {
-		unsigned char byte1 = conn->read();
-		unsigned char byte2 = conn->read();
-		unsigned char byte3 = conn->read();
-		unsigned char byte4 = conn->read();
-		return (byte1 << 24) | (byte2 << 16) | 
-		(byte3 << 8) | byte4;
-	}
-	void ServerCommandHandler::writeNumber(int num, string& s) {
-
-	#define w(off) { \
-		unsigned char c = static_cast<unsigned char>(num >> off); \
-		s += c; }
-
-		w(24);
-		w(16);
-		w(8);
-		w(0);
-	}
-	int ServerCommandHandler::readIntParameter(Connection* conn) 
-	throw(ConnectionClosedException){
-		
-		unsigned char pn = conn->read();
-		clientAssert(pn == Protocol::PAR_NUM);
-
-		return readNumber(conn);
-	}
-	string ServerCommandHandler::readStringParameter(Connection* conn) 
-	throw(ConnectionClosedException){
-		
-		unsigned char ps = conn->read();
-
-		clientAssert(ps == Protocol::PAR_STRING);
-
-		int num = readNumber(conn);
-
-		string ret;
-		for (int i = 0; i < num; ++i)
-		{
-			unsigned char c = conn->read();
-			ret += c;
-		}
-
-		return ret;
-	}
-
-	void ServerCommandHandler::writeString(const string& s, Connection* conn)
-	throw(ConnectionClosedException) {
-		for (size_t i = 0; i < s.size(); ++i) {
-			conn->write(s[i]);
+		} else {
+			server.registerConnection(new Connection);
+			cout << "New client connects" << endl;
 		}
 	}
 
-	void ServerCommandHandler::writeStringParameter(string param, string& ret) {
-		ret += Protocol::PAR_STRING;
-		writeNumber(param.size(), ret);
-		ret += param;
+	for (unsigned int i=0; i<groups.size(); ++i) {
+		Newsgroup* ng = groups[i];
+		delete ng;
 	}
 
-	void ServerCommandHandler::listNewsGroups(const vector<Newsgroup*>& groups, Connection* conn) 
-	throw(ConnectionClosedException) {
-		string ret;
+}; 
 
-		ret += Protocol::ANS_LIST_NG;
+unsigned char ServerCommandHandler::readCommand(Connection* conn)
+throw(ConnectionClosedException) {
+
+	unsigned char cmd = conn->read();
+	return cmd;
+}
+int ServerCommandHandler::readNumber(Connection* conn) {
+	unsigned char byte1 = conn->read();
+	unsigned char byte2 = conn->read();
+	unsigned char byte3 = conn->read();
+	unsigned char byte4 = conn->read();
+	return (byte1 << 24) | (byte2 << 16) | 
+	(byte3 << 8) | byte4;
+}
+void ServerCommandHandler::writeNumber(int num, string& s) {
+
+#define w(off) { \
+	unsigned char c = static_cast<unsigned char>(num >> off); \
+	s += c; }
+
+	w(24);
+	w(16);
+	w(8);
+	w(0);
+}
+int ServerCommandHandler::readIntParameter(Connection* conn) 
+throw(ConnectionClosedException){
+	
+	unsigned char pn = conn->read();
+	clientAssert(pn == Protocol::PAR_NUM);
+
+	return readNumber(conn);
+}
+string ServerCommandHandler::readStringParameter(Connection* conn) 
+throw(ConnectionClosedException){
+	
+	unsigned char ps = conn->read();
+
+	clientAssert(ps == Protocol::PAR_STRING);
+
+	int num = readNumber(conn);
+
+	string ret;
+	for (int i = 0; i < num; ++i)
+	{
+		unsigned char c = conn->read();
+		ret += c;
+	}
+
+	return ret;
+}
+
+void ServerCommandHandler::writeString(const string& s, Connection* conn)
+throw(ConnectionClosedException) {
+	for (size_t i = 0; i < s.size(); ++i) {
+		conn->write(s[i]);
+	}
+}
+
+void ServerCommandHandler::writeStringParameter(string param, string& ret) {
+	ret += Protocol::PAR_STRING;
+	writeNumber(param.size(), ret);
+	ret += param;
+}
+
+void ServerCommandHandler::listNewsGroups(const vector<Newsgroup*>& groups, Connection* conn) 
+throw(ConnectionClosedException) {
+	string ret;
+
+	ret += Protocol::ANS_LIST_NG;
+
+	ret += Protocol::PAR_NUM;
+	writeNumber(groups.size(), ret);
+
+	for (auto it = groups.begin(); it != groups.end(); ++it) {
+		Newsgroup* grp = *it;
 
 		ret += Protocol::PAR_NUM;
-		writeNumber(groups.size(), ret);
+		writeNumber(grp->getID(), ret);
 
-		for (auto it = groups.begin(); it != groups.end(); ++it) {
-			Newsgroup* grp = *it;
-
-			ret += Protocol::PAR_NUM;
-			writeNumber(grp->getID(), ret);
-
-			writeStringParameter(grp->getName(), ret);
-		}
-		ret += Protocol::ANS_END;
-
-		writeString(ret, conn);
+		writeStringParameter(grp->getName(), ret);
 	}
-	void ServerCommandHandler::listArticles(const vector<Newsgroup*>& groups, Connection* conn) {
-		unsigned int id = readIntParameter(conn);
-		string ret;
-		ret += Protocol::ANS_LIST_ART;
-		auto it = find_if(groups.begin(), groups.end(), [id](Newsgroup* grp) {
-			return grp->getID() == id;
-		});
+	ret += Protocol::ANS_END;
 
-		if(it== groups.end()){
-			ret += Protocol::ANS_NAK;
-			ret += Protocol::ERR_NG_DOES_NOT_EXIST;
-		}else{
-			ret += Protocol::ANS_ACK;
-			Newsgroup *n = *it;
-			ret += Protocol::PAR_NUM;		
-			writeNumber(n->size(),ret);
-			for(int i = 0; i!=n->size(); ++i){
-				Article* a = (*n)[i];
-				
-				ret += Protocol::PAR_NUM;
-				writeNumber(a->getID(),ret);
+	writeString(ret, conn);
+}
+void ServerCommandHandler::listArticles(const vector<Newsgroup*>& groups, Connection* conn) {
+	unsigned int id = readIntParameter(conn);
+	string ret;
+	ret += Protocol::ANS_LIST_ART;
+	auto it = find_if(groups.begin(), groups.end(), [id](Newsgroup* grp) {
+		return grp->getID() == id;
+	});
 
-				writeStringParameter(a->getTitle(), ret);
-			}
-		}
-
-		ret += Protocol::ANS_END;
-
-		writeString(ret,conn);
-	}
-
-	void ServerCommandHandler::createNewsGroup(vector<Newsgroup*>& groups, Connection* conn, unsigned int& currNewsGroupID) 
-	throw(ConnectionClosedException){
-
-		cout << "sch.createNewsgroup, hello! " << endl;
-
-		string ret;
-
-		ret += Protocol::ANS_CREATE_NG;
-
-		string name = readStringParameter(conn);
-
-		auto it = find_if(groups.begin(), groups.end(), [name](Newsgroup* grp) {
-			return grp->getName() == name;
-		});
-
-		if (it != groups.end()) {
-			ret += Protocol::ANS_NAK;
-			ret += Protocol::ERR_NG_ALREADY_EXISTS;
-			ret += Protocol::ANS_END;
-			writeString(ret, conn);
-			return;
-		}
-		
-		Newsgroup* newGroup = new Newsgroup(name, ++currNewsGroupID);
-		groups.push_back(newGroup);
-
-		cout << "created news group, maybe calling listener!" << endl;
-		if (listener) {
-			cout << " calling! " << endl;
-			listener->onCreatedNewsgroup(newGroup);
-		} else {
-			cout << "not calling" << endl;
-		}
-
+	if(it== groups.end()){
+		ret += Protocol::ANS_NAK;
+		ret += Protocol::ERR_NG_DOES_NOT_EXIST;
+	}else{
 		ret += Protocol::ANS_ACK;
-		ret += Protocol::ANS_END;
-
-		writeString(ret, conn);
-	}
-	void ServerCommandHandler::deleteNewsGroup(vector<Newsgroup*>& groups, Connection* conn) 
-	throw(ConnectionClosedException){
-
-		string ret;
-
-		ret += Protocol::ANS_DELETE_NG;
-
-		unsigned int id = readIntParameter(conn);
-
-		auto it = find_if(groups.begin(), groups.end(), [id](Newsgroup* grp) {
-			return grp->getID() == id;
-		});
-
-		if (it == groups.end()) {
-			ret += Protocol::ANS_NAK;
-			ret += Protocol::ERR_NG_DOES_NOT_EXIST;
-		} else {
-			Newsgroup* ng = *it;
-			groups.erase(it);
-			delete ng;
-			ret += Protocol::ANS_ACK;
+		Newsgroup *n = *it;
+		ret += Protocol::PAR_NUM;		
+		writeNumber(n->size(),ret);
+		for(int i = 0; i!=n->size(); ++i){
+			Article* a = (*n)[i];
 			
-			if (listener)
-				listener->onDeletedNewsgroup(id);
+			ret += Protocol::PAR_NUM;
+			writeNumber(a->getID(),ret);
+
+			writeStringParameter(a->getTitle(), ret);
 		}
+	}
+
+	ret += Protocol::ANS_END;
+
+	writeString(ret,conn);
+}
+
+void ServerCommandHandler::createNewsGroup(vector<Newsgroup*>& groups, Connection* conn, unsigned int& currNewsGroupID) 
+throw(ConnectionClosedException){
+
+	cout << "sch.createNewsgroup, hello! " << endl;
+
+	string ret;
+
+	ret += Protocol::ANS_CREATE_NG;
+
+	string name = readStringParameter(conn);
+
+	auto it = find_if(groups.begin(), groups.end(), [name](Newsgroup* grp) {
+		return grp->getName() == name;
+	});
+
+	if (it != groups.end()) {
+		ret += Protocol::ANS_NAK;
+		ret += Protocol::ERR_NG_ALREADY_EXISTS;
 		ret += Protocol::ANS_END;
 		writeString(ret, conn);
+		return;
+	}
+	
+	Newsgroup* newGroup = new Newsgroup(name, ++currNewsGroupID);
+	groups.push_back(newGroup);
+
+	cout << "created news group, maybe calling listener!" << endl;
+	if (listener) {
+		cout << " calling! " << endl;
+		listener->onCreatedNewsgroup(newGroup);
+	} else {
+		cout << "not calling" << endl;
 	}
 
-	void ServerCommandHandler::createArticle(vector<Newsgroup*>& groups, Connection* conn){
-		unsigned int id = readIntParameter(conn);
-		string ret;
-		ret += Protocol::ANS_CREATE_ART;
-		auto it = find_if(groups.begin(), groups.end(), [id](Newsgroup* grp) {
-			return grp->getID() == id;
-		});
+	ret += Protocol::ANS_ACK;
+	ret += Protocol::ANS_END;
 
-		if(it== groups.end()){
-			ret += Protocol::ANS_NAK;
-			ret += Protocol::ERR_NG_DOES_NOT_EXIST;
-			readStringParameter(conn),
-			readStringParameter(conn), 
-			readStringParameter(conn);	
+	writeString(ret, conn);
+}
+void ServerCommandHandler::deleteNewsGroup(vector<Newsgroup*>& groups, Connection* conn) 
+throw(ConnectionClosedException){
+
+	string ret;
+
+	ret += Protocol::ANS_DELETE_NG;
+
+	unsigned int id = readIntParameter(conn);
+
+	auto it = find_if(groups.begin(), groups.end(), [id](Newsgroup* grp) {
+		return grp->getID() == id;
+	});
+
+	if (it == groups.end()) {
+		ret += Protocol::ANS_NAK;
+		ret += Protocol::ERR_NG_DOES_NOT_EXIST;
+	} else {
+		Newsgroup* ng = *it;
+		groups.erase(it);
+		delete ng;
+		ret += Protocol::ANS_ACK;
+		
+		if (listener)
+			listener->onDeletedNewsgroup(id);
+	}
+	ret += Protocol::ANS_END;
+	writeString(ret, conn);
+}
+
+void ServerCommandHandler::createArticle(vector<Newsgroup*>& groups, Connection* conn){
+	unsigned int id = readIntParameter(conn);
+	string ret;
+	ret += Protocol::ANS_CREATE_ART;
+	auto it = find_if(groups.begin(), groups.end(), [id](Newsgroup* grp) {
+		return grp->getID() == id;
+	});
+
+	if(it== groups.end()){
+		ret += Protocol::ANS_NAK;
+		ret += Protocol::ERR_NG_DOES_NOT_EXIST;
+		readStringParameter(conn),
+		readStringParameter(conn), 
+		readStringParameter(conn);	
+	}else{
+		ret += Protocol::ANS_ACK;
+		Newsgroup *n = *it;
+		Article* a = n->createArticle(
+							readStringParameter(conn),
+							readStringParameter(conn), 
+							readStringParameter(conn));	
+		if (listener)
+			listener->onCreatedArticle(n, a);
+	}
+
+	ret += Protocol::ANS_END;
+
+	writeString(ret,conn);
+}
+
+
+void ServerCommandHandler::deleteArticle(vector<Newsgroup*>& groups, Connection* conn){
+	unsigned int idgroup = readIntParameter(conn);
+	unsigned int idArt = readIntParameter(conn);
+	string ret;
+	ret += Protocol::ANS_DELETE_ART;
+	auto it = find_if(groups.begin(), groups.end(), [idgroup](Newsgroup* grp) {
+		return grp->getID() == idgroup;
+	});
+
+	if(it== groups.end()){
+		ret += Protocol::ANS_NAK;
+		ret += Protocol::ERR_NG_DOES_NOT_EXIST;
+	}else{		
+		Newsgroup *n = *it;
+		Article* a = n->getArticle(idArt);
+		if( a ==0){
+			ret+=Protocol::ANS_NAK;
+			ret += Protocol::ERR_ART_DOES_NOT_EXIST;
+
 		}else{
-			ret += Protocol::ANS_ACK;
-			Newsgroup *n = *it;
-			Article* a = n->createArticle(
-								readStringParameter(conn),
-								readStringParameter(conn), 
-								readStringParameter(conn));	
+			n->deleteArticle(idArt);
+			ret+= Protocol::ANS_ACK;
+
 			if (listener)
-				listener->onCreatedArticle(n, a);
+				listener->onDeletedArticle(idgroup, idArt);
 		}
-
-		ret += Protocol::ANS_END;
-
-		writeString(ret,conn);
 	}
 
+	ret += Protocol::ANS_END;
 
-	void ServerCommandHandler::deleteArticle(vector<Newsgroup*>& groups, Connection* conn){
-		unsigned int idgroup = readIntParameter(conn);
-		unsigned int idArt = readIntParameter(conn);
-		string ret;
-		ret += Protocol::ANS_DELETE_ART;
-		auto it = find_if(groups.begin(), groups.end(), [idgroup](Newsgroup* grp) {
-			return grp->getID() == idgroup;
-		});
+	writeString(ret,conn);
+}
 
-		if(it== groups.end()){
-			ret += Protocol::ANS_NAK;
-			ret += Protocol::ERR_NG_DOES_NOT_EXIST;
-		}else{		
-			Newsgroup *n = *it;
-			Article* a = n->getArticle(idArt);
-			if( a ==0){
-				ret+=Protocol::ANS_NAK;
-				ret += Protocol::ERR_ART_DOES_NOT_EXIST;
+void ServerCommandHandler::getArticle(vector<Newsgroup*>& groups, Connection* conn){
+	unsigned int idgroup = readIntParameter(conn);
+	unsigned int idArt = readIntParameter(conn);
+	string ret;
+	ret += Protocol::ANS_GET_ART;
+	auto it = find_if(groups.begin(), groups.end(), [idgroup](Newsgroup* grp) {
+		return grp->getID() == idgroup;
+	});
 
-			}else{
-				n->deleteArticle(idArt);
-				ret+= Protocol::ANS_ACK;
+	if(it== groups.end()){
+		ret += Protocol::ANS_NAK;
+		ret += Protocol::ERR_NG_DOES_NOT_EXIST;
+	}else{		
+		Newsgroup *n = *it;
+		Article* a = n->getArticle(idArt);
+		if( a ==0){
+			ret+=Protocol::ANS_NAK;
+			ret += Protocol::ERR_ART_DOES_NOT_EXIST;
 
-				if (listener)
-					listener->onDeletedArticle(idgroup, idArt);
-			}
+		}else{			
+			ret+= Protocol::ANS_ACK;
+			writeStringParameter(a->getTitle(), ret);
+			writeStringParameter(a->getAuthor(), ret);
+			writeStringParameter(a->getText(), ret);
 		}
-
-		ret += Protocol::ANS_END;
-
-		writeString(ret,conn);
 	}
 
-	void ServerCommandHandler::getArticle(vector<Newsgroup*>& groups, Connection* conn){
-		unsigned int idgroup = readIntParameter(conn);
-		unsigned int idArt = readIntParameter(conn);
-		string ret;
-		ret += Protocol::ANS_GET_ART;
-		auto it = find_if(groups.begin(), groups.end(), [idgroup](Newsgroup* grp) {
-			return grp->getID() == idgroup;
-		});
-
-		if(it== groups.end()){
-			ret += Protocol::ANS_NAK;
-			ret += Protocol::ERR_NG_DOES_NOT_EXIST;
-		}else{		
-			Newsgroup *n = *it;
-			Article* a = n->getArticle(idArt);
-			if( a ==0){
-				ret+=Protocol::ANS_NAK;
-				ret += Protocol::ERR_ART_DOES_NOT_EXIST;
-
-			}else{			
-				ret+= Protocol::ANS_ACK;
-				writeStringParameter(a->getTitle(), ret);
-				writeStringParameter(a->getAuthor(), ret);
-				writeStringParameter(a->getText(), ret);
-			}
-		}
-
-		ret += Protocol::ANS_END;
-		writeString(ret,conn);
-	}
-
-};
+	ret += Protocol::ANS_END;
+	writeString(ret,conn);
+}
 
