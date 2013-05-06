@@ -1,6 +1,6 @@
 
 #ifndef SERVER_COMMAND_HANDLER_H
-
+#define SERVER_COMMAND_HANDLER_H
 
 #include "server.h"
 #include "connection.h"
@@ -37,19 +37,106 @@ public:
 	~ServerCommandHandler() {};
 
 
+
+
+	virtual void init(Server server){
+
+
+		vector<Newsgroup*> groups;
+		currNewsGroupID = 0;
+
+		while (true) {
+			Connection* conn = server.waitForActivity();
+			if (conn != 0) {
+				try {
+					unsigned int nbr = readCommand(conn);
+
+					try {
+						switch (nbr) {
+							case Protocol::COM_LIST_NG:
+							{
+								listNewsGroups(groups, conn);
+							}
+							break;
+							case Protocol::COM_CREATE_NG:
+							{
+								createNewsGroup(groups, conn, currNewsGroupID);
+							}
+							break;
+							case Protocol::COM_DELETE_NG:
+							{
+								deleteNewsGroup(groups, conn);
+							}
+							break;
+							case Protocol::COM_LIST_ART:
+							{
+								listArticles(groups, conn);
+							}
+							break;
+							case Protocol::COM_CREATE_ART:
+							{
+								createArticle(groups,conn);
+							}
+							break;
+							case Protocol::COM_DELETE_ART:
+							{
+								deleteArticle(groups,conn);
+							}
+							break;
+							case Protocol::COM_GET_ART:
+							{
+								getArticle(groups,conn);
+							}
+							break;
+							default:
+							{
+								cerr << "NewsServer recieved unrecognized code " << nbr << ", exiting. " << endl;
+								clientAssert(false);
+							}
+							break;
+						}
+
+						unsigned int end = readCommand(conn);
+
+						clientAssert(end == Protocol::COM_END);
+
+					} catch (naughty_client& cli) {
+						cout << "Naughty client caught! Disconnecting him/her/hen." << endl;
+						server.deregisterConnection(conn);
+					}
+
+
+				} catch (ConnectionClosedException&) {
+					server.deregisterConnection(conn);
+					delete conn;
+					cout << "Client closed connection" << endl;
+				}
+			} else {
+				server.registerConnection(new Connection);
+				cout << "New client connects" << endl;
+			}
+		}
+
+		for (unsigned int i=0; i<groups.size(); ++i) {
+			Newsgroup* ng = groups[i];
+			delete ng;
+		}
+
+	}; 
+
 	unsigned char readCommand(Connection* conn)
-		throw(ConnectionClosedException) {
+	throw(ConnectionClosedException) {
 
 		unsigned char cmd = conn->read();
 		return cmd;
 	}
 	int readNumber(Connection* conn) {
-	    unsigned char byte1 = conn->read();
-	    unsigned char byte2 = conn->read();
-	    unsigned char byte3 = conn->read();
-	    unsigned char byte4 = conn->read();
-	    return (byte1 << 24) | (byte2 << 16) | 
-	        (byte3 << 8) | byte4;
+		unsigned char byte1 = conn->read();
+		unsigned char byte2 = conn->read();
+		unsigned char byte3 = conn->read();
+		unsigned char byte4 = conn->read();
+		return (byte1 << 24) | (byte2 << 16) | 
+		(byte3 << 8) | byte4;
 	}
 	void writeNumber(int num, string& s) {
 
@@ -63,7 +150,7 @@ public:
 		w(0);
 	}
 	int readIntParameter(Connection* conn) 
-		throw(ConnectionClosedException){
+	throw(ConnectionClosedException){
 		
 		unsigned char pn = conn->read();
 		clientAssert(pn == Protocol::PAR_NUM);
@@ -71,7 +158,7 @@ public:
 		return readNumber(conn);
 	}
 	string readStringParameter(Connection* conn) 
-		throw(ConnectionClosedException){
+	throw(ConnectionClosedException){
 		
 		unsigned char ps = conn->read();
 
@@ -90,7 +177,7 @@ public:
 	}
 
 	void writeString(const string& s, Connection* conn)
-		throw(ConnectionClosedException) {
+	throw(ConnectionClosedException) {
 		for (size_t i = 0; i < s.size(); ++i) {
 			conn->write(s[i]);
 		}
@@ -103,7 +190,7 @@ public:
 	}
 
 	void listNewsGroups(const vector<Newsgroup*>& groups, Connection* conn) 
-		throw(ConnectionClosedException) {
+	throw(ConnectionClosedException) {
 		string ret;
 
 		ret += Protocol::ANS_LIST_NG;
@@ -155,7 +242,7 @@ public:
 	}
 
 	void createNewsGroup(vector<Newsgroup*>& groups, Connection* conn, unsigned int& currNewsGroupID) 
-		throw(ConnectionClosedException){
+	throw(ConnectionClosedException){
 
 		string ret;
 
@@ -184,7 +271,7 @@ public:
 		writeString(ret, conn);
 	}
 	void deleteNewsGroup(vector<Newsgroup*>& groups, Connection* conn) 
-		throw(ConnectionClosedException){
+	throw(ConnectionClosedException){
 
 		string ret;
 
@@ -298,6 +385,9 @@ public:
 		ret += Protocol::ANS_END;
 		writeString(ret,conn);
 	}
+
+private:
+	unsigned int currNewsGroupID;
 
 
 };
