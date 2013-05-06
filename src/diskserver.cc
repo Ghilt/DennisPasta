@@ -1,5 +1,5 @@
 #include "servercommandhandler.h"
-//#include "ServerEventDiskWriter.h"
+#include "servereventdiskwriter.h"
 
 int main(int argc, char* argv[]){
 	if (argc != 2) {
@@ -13,8 +13,8 @@ int main(int argc, char* argv[]){
 		exit(1);
 	}
 	ServerCommandHandler sch;
-	//ServerEventListener* writer = new ServerEventDiskWriter(sch);
-	//sch.setEventListener(NULL);
+	ServerEventListener* writer = new ServerEventDiskWriter(sch);
+	sch.setEventListener(writer);
 	sch.init(server);
 }
 

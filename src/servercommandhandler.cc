@@ -8,8 +8,8 @@ struct naughty_client {};
 
 ServerCommandHandler::ServerCommandHandler() : currNewsGroupID(0) {
 	listener = NULL;
-};
-ServerCommandHandler::~ServerCommandHandler() {};
+}
+ServerCommandHandler::~ServerCommandHandler() {}
 
 
 
@@ -100,7 +100,7 @@ void ServerCommandHandler::init(Server& server){
 		delete ng;
 	}
 
-}; 
+}
 
 unsigned char ServerCommandHandler::readCommand(Connection* conn)
 throw(ConnectionClosedException) {
