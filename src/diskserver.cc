@@ -16,9 +16,8 @@ int main(int argc, char* argv[]){
 		exit(1);
 	}
 	ServerCommandHandler sch;
-	ServerEventDiskWriter* writer = new ServerEventDiskWriter(sch);
-	sch.setEventListener(writer);
-
+	ServerEventDiskWriter writer(sch);
+	sch.setEventListener(&writer);
 	sch.init(server);
 }
 
