@@ -15,5 +15,3 @@ int main(int argc, char* argv[]){
 	ServerCommandHandler sch;
 	sch.init(server);
 }
-
-

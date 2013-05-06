@@ -20,15 +20,12 @@ void ServerCommandHandler::setEventListener(ServerEventListener* listener) {
 
 void ServerCommandHandler::init(Server& server){
 
-	cout << "sch.init" << endl;
-
 	while (true) {
 		Connection* conn = server.waitForActivity();
 		if (conn != 0) {
 			try {
 				unsigned int nbr = readCommand(conn);
 
-				cout << "read command " << nbr << endl;
 				try {
 					switch (nbr) {
 						case Protocol::COM_LIST_NG:
@@ -222,8 +219,6 @@ void ServerCommandHandler::listArticles(const vector<Newsgroup*>& groups, Connec
 void ServerCommandHandler::createNewsGroup(vector<Newsgroup*>& groups, Connection* conn, unsigned int& currNewsGroupID) 
 throw(ConnectionClosedException){
 
-	cout << "sch.createNewsgroup, hello! " << endl;
-
 	string ret;
 
 	ret += Protocol::ANS_CREATE_NG;
@@ -245,13 +240,8 @@ throw(ConnectionClosedException){
 	Newsgroup* newGroup = new Newsgroup(name, ++currNewsGroupID);
 	groups.push_back(newGroup);
 
-	cout << "created news group, maybe calling listener!" << endl;
-	if (listener) {
-		cout << " calling! " << endl;
+	if (listener)
 		listener->onCreatedNewsgroup(newGroup);
-	} else {
-		cout << "not calling" << endl;
-	}
 
 	ret += Protocol::ANS_ACK;
 	ret += Protocol::ANS_END;

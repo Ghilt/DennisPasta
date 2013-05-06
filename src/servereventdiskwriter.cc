@@ -107,19 +107,21 @@ void ServerEventDiskWriter::onCreatedArticle(Newsgroup* grp, Article* art) {
 	myfile << art->getTitle() << "\n" << art->getAuthor() << "\n" << art->getText();
 	myfile.close(); 
 	
-	
+	ss << "/info";
+	myfile.open(ss.str().c_str());
+	myfile << grp->getName() << "\n" << grp->getCurrentArticleId();
+	myfile.close();
 }
 
 
 void ServerEventDiskWriter::onCreatedNewsgroup(Newsgroup* grp){
-
-	std::cout << "onCreatedNewsgroup!" << std::endl;
 
 	stringstream ss;
 	ss << "./db/";
 	unsigned int id = grp->getID();
 	
 	ss << id;
+	mkdir("./db/", S_IRWXU|S_IRGRP|S_IXGRP);
 	mkdir(ss.str().c_str(), S_IRWXU|S_IRGRP|S_IXGRP);
 
 	ofstream myfile;
@@ -145,10 +147,10 @@ int ServerEventDiskWriter::remove_directory(string path){
 				if(t){
 					remove_directory(s.c_str());
 					rmdir(s.c_str());
+					closedir(t);
 				}else {
 					unlink(s.c_str());
 				}
-				closedir(t);
 			}
 			dp = readdir(d);
 		}
