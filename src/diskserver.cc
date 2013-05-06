@@ -1,6 +1,9 @@
 #include "servercommandhandler.h"
 #include "ServerEventDiskWriter.h"
 
+
+using namespace std;
+
 int main(int argc, char* argv[]){
 	if (argc != 2) {
 		cerr << "Usage: diskserver port-number" << endl;
@@ -15,6 +18,7 @@ int main(int argc, char* argv[]){
 	ServerCommandHandler sch;
 	ServerEventDiskWriter* writer = new ServerEventDiskWriter(sch);
 	sch.setEventListener(writer);
+
 	sch.init(server);
 }
 

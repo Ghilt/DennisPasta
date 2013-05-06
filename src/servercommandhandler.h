@@ -55,7 +55,7 @@ public:
 
 	void init(Server& server){
 
-
+		cout << "sch.init" << endl;
 
 		while (true) {
 			Connection* conn = server.waitForActivity();
@@ -63,6 +63,7 @@ public:
 				try {
 					unsigned int nbr = readCommand(conn);
 
+					cout << "read command " << nbr << endl;
 					try {
 						switch (nbr) {
 							case Protocol::COM_LIST_NG:
@@ -256,6 +257,8 @@ public:
 	void createNewsGroup(vector<Newsgroup*>& groups, Connection* conn, unsigned int& currNewsGroupID) 
 	throw(ConnectionClosedException){
 
+		cout << "sch.createNewsgroup, hello! " << endl;
+
 		string ret;
 
 		ret += Protocol::ANS_CREATE_NG;
@@ -277,8 +280,13 @@ public:
 		Newsgroup* newGroup = new Newsgroup(name, ++currNewsGroupID);
 		groups.push_back(newGroup);
 
-		if (listener)
+		cout << "created news group, maybe calling listener!" << endl;
+		if (listener) {
+			cout << " calling! " << endl;
 			listener->onCreatedNewsgroup(newGroup);
+		} else {
+			cout << "not calling" << endl;
+		}
 
 		ret += Protocol::ANS_ACK;
 		ret += Protocol::ANS_END;
